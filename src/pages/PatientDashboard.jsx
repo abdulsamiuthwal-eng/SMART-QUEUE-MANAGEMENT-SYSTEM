@@ -15,6 +15,7 @@ import { SmartQueueLogo } from '../components/SmartQueueLogo';
 import { TriageChatbot } from '../components/TriageChatbot';
 import { GlassSelect } from '../components/GlassSelect';
 import { GlassTimeScheduler } from '../components/GlassTimeScheduler';
+import SignOutConfirmModal from '../components/SignOutConfirmModal';
 import { useSmoothScroll } from '../hooks/useSmoothScroll';
 import dashboardLoungeArt from '../assets/dashboard_lounge.webp';
 
@@ -22,6 +23,9 @@ export const PatientDashboard = () => {
   useSmoothScroll();
   const { currentUser, logout } = useAuth();
   const { t, locale, toggleLanguage } = useLanguage();
+
+  // Sign Out Confirmation Modal State
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
 
   // Clinics & Booking States
   const [clinics, setClinics] = useState([]);
@@ -67,6 +71,22 @@ export const PatientDashboard = () => {
 
   // Page Loading state for Shimmer Glass Skeleton
   const [pageLoading, setPageLoading] = useState(true);
+
+  // Intercept browser Back button and display premium Sign Out confirmation modal
+  useEffect(() => {
+    window.history.pushState({ page: 'patient-dashboard' }, '', window.location.href);
+
+    const handlePopState = () => {
+      // Re-push history so user is not navigated back to login without confirmation
+      window.history.pushState({ page: 'patient-dashboard' }, '', window.location.href);
+      setShowSignOutModal(true);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   // 1. Fetch available clinics on load
   useEffect(() => {
@@ -432,7 +452,7 @@ export const PatientDashboard = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={logout}
+            onClick={() => setShowSignOutModal(true)}
             className="flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 bg-rose-500/20 border border-rose-400/35 rounded-full text-[11px] sm:text-xs font-bold text-rose-200 hover:bg-rose-500/30 cursor-pointer transition-all shadow-sm"
           >
             <LogOut size={13} />
@@ -1429,6 +1449,16 @@ export const PatientDashboard = () => {
         onSelectDepartment={(deptName) => {
           setSelectedDept(deptName);
           triggerAlert('success', `Triage recommendation applied: ${deptName}`);
+        }}
+      />
+
+      {/* Premium Bilingual Sign Out Confirmation Modal */}
+      <SignOutConfirmModal
+        isOpen={showSignOutModal}
+        onClose={() => setShowSignOutModal(false)}
+        onConfirm={async () => {
+          setShowSignOutModal(false);
+          await logout();
         }}
       />
     </div>

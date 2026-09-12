@@ -44,7 +44,7 @@ export const Login = () => {
 
   const handleSplashComplete = () => {
     setShowSplash(false);
-    navigate(destPath);
+    navigate(destPath, { replace: true });
   };
 
   const handleSubmit = async (e) => {

@@ -86,7 +86,7 @@ export const AuthPortal = ({ initialView = 'welcome' }) => {
 
   const handleSplashComplete = () => {
     setShowSplash(false);
-    navigate(destPath);
+    navigate(destPath, { replace: true });
   };
 
   const handleSubmit = async (e) => {

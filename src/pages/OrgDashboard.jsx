@@ -10,6 +10,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { SmartQueueLogo } from '../components/SmartQueueLogo';
 import { TriageChatbot } from '../components/TriageChatbot';
+import SignOutConfirmModal from '../components/SignOutConfirmModal';
 import { useSmoothScroll } from '../hooks/useSmoothScroll';
 import dashboardLoungeArt from '../assets/dashboard_lounge.webp';
 
@@ -17,6 +18,9 @@ export const OrgDashboard = () => {
   useSmoothScroll();
   const { currentUser, logout } = useAuth();
   const { t, locale, toggleLanguage } = useLanguage();
+
+  // Sign Out Confirmation Modal State
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
 
   // Settings & Navigation States
   const [activeTab, setActiveTab] = useState('queue'); // 'queue' | 'departments' | 'supplies' | 'reports'
@@ -59,6 +63,22 @@ export const OrgDashboard = () => {
 
   // Page Loading state for Shimmer Glass Skeleton
   const [pageLoading, setPageLoading] = useState(true);
+
+  // Intercept browser Back button and display premium Sign Out confirmation modal
+  useEffect(() => {
+    window.history.pushState({ page: 'org-dashboard' }, '', window.location.href);
+
+    const handlePopState = () => {
+      // Re-push history so user is not navigated back to login without confirmation
+      window.history.pushState({ page: 'org-dashboard' }, '', window.location.href);
+      setShowSignOutModal(true);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   const triggerAlert = (type, text) => {
     setAlert({ type, text });
@@ -352,7 +372,7 @@ export const OrgDashboard = () => {
               <span>{locale === 'en' ? 'اردو' : 'EN'}</span>
             </button>
             <button
-              onClick={logout}
+              onClick={() => setShowSignOutModal(true)}
               className="flex items-center gap-1 px-2.5 py-1.5 bg-rose-500/20 border border-rose-400/35 rounded-full text-[11px] font-bold text-rose-200 cursor-pointer shadow-sm"
             >
               <LogOut size={13} />
@@ -416,7 +436,7 @@ export const OrgDashboard = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={logout}
+              onClick={() => setShowSignOutModal(true)}
               className="flex items-center gap-1.5 px-4 py-1.5 bg-rose-500/20 border border-rose-400/35 rounded-full text-xs font-extrabold text-rose-200 hover:bg-rose-500/30 cursor-pointer transition-all shadow-sm"
             >
               <LogOut size={13} />
@@ -1561,6 +1581,16 @@ export const OrgDashboard = () => {
         reports={reports}
         forecast={forecast}
         clinicName={currentUser?.hospitalName || 'Clinic'}
+      />
+
+      {/* Premium Bilingual Sign Out Confirmation Modal */}
+      <SignOutConfirmModal
+        isOpen={showSignOutModal}
+        onClose={() => setShowSignOutModal(false)}
+        onConfirm={async () => {
+          setShowSignOutModal(false);
+          await logout();
+        }}
       />
     </div>
   );

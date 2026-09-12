@@ -19,6 +19,14 @@ export const translations = {
       loading: 'Initializing real-time connection...',
       connecting: 'Syncing live tokens & queue status...',
     },
+    signOutModal: {
+      badge: 'Security & Session',
+      title: 'Confirm Sign Out',
+      message: 'Are you sure you want to sign out?',
+      submessage: 'You will return to the login screen. Any active tickets, tokens, and appointments remain safely preserved in the system.',
+      confirm: 'Yes, Sign Out',
+      cancel: 'Cancel / Stay',
+    },
     welcome: {
       badge: 'Smart Healthcare Flow',
       title: 'Smart Queue',
@@ -207,6 +215,14 @@ export const translations = {
       tagline: 'جدید ترین ڈیجیٹل قطار مینیجمنٹ سسٹم',
       loading: 'لائیو سسٹم سے رابطہ قائم کیا جا رہا ہے...',
       connecting: 'لائیو ٹوکن ڈیٹا ہم آہنگ ہو رہا ہے...',
+    },
+    signOutModal: {
+      badge: 'سیشن مینیجمنٹ',
+      title: 'لاگ آؤٹ کی تصدیق',
+      message: 'کیا آپ واقعی لاگ آؤٹ کرنا چاہتے ہیں؟',
+      submessage: 'آپ دوبارہ لاگ ان اسکرین پر چلے جائیں گے۔ آپ کے تمام فعال ٹوکنز اور تاریخ محفوظ رہے گی۔',
+      confirm: 'جی ہاں، لاگ آؤٹ کریں',
+      cancel: 'منسوخ کریں (ڈیش بورڈ پر رہیں)',
     },
     welcome: {
       badge: 'سمارٹ ہیلتھ کیئر فلو',
