@@ -1,0 +1,6 @@
+{
+  "name": "smartqueue-healthcare",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}
