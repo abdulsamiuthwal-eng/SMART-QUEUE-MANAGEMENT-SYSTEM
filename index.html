@@ -8,6 +8,25 @@
     <meta name="description" content="Smart Queue is a modern, real-time queue management system for hospitals, clinics, and organizations to minimize wait times, manage appointments, and optimize patient flows." />
     <!-- High-priority preload for background artwork to eliminate any Ctrl+Shift+R blank gap -->
     <link rel="preload" as="image" href="/src/assets/queue_lounge_art.webp" type="image/webp" fetchpriority="high" />
+
+    <!-- Global Frosted Glass standard: Guaranteed backdropFilter support on production builds -->
+    <style>
+      .glass-acrylic-card,
+      .glass-card,
+      .glass-panel,
+      .glass-panel-dark {
+        -webkit-backdrop-filter: blur(16px) saturate(145%) !important;
+        backdrop-filter: blur(16px) saturate(145%) !important;
+      }
+      .glass-acrylic-pill {
+        -webkit-backdrop-filter: blur(12px) saturate(130%) !important;
+        backdrop-filter: blur(12px) saturate(130%) !important;
+      }
+      .glass-input {
+        -webkit-backdrop-filter: blur(12px) !important;
+        backdrop-filter: blur(12px) !important;
+      }
+    </style>
   </head>
   <body class="bg-slate-950">
     <div id="root"></div>

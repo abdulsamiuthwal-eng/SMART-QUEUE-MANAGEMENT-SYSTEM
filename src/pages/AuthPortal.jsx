@@ -279,7 +279,10 @@ export const AuthPortal = ({ initialView = 'welcome' }) => {
             </div>
 
             {/* Ambient Info Card */}
-            <div className="w-full max-w-xl space-y-3.5 p-6 lg:p-7 rounded-[30px] glass-acrylic-card transform-gpu relative overflow-hidden">
+            <div 
+              style={{ backdropFilter: 'blur(16px) saturate(145%)', WebkitBackdropFilter: 'blur(16px) saturate(145%)' }}
+              className="w-full max-w-xl space-y-3.5 p-6 lg:p-7 rounded-[30px] glass-acrylic-card transform-gpu relative overflow-hidden"
+            >
               <div className="absolute -top-16 -left-16 w-52 h-52 bg-white/10 rounded-full blur-2xl pointer-events-none" />
               
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/35 text-[11px] font-bold text-amber-200">
@@ -319,7 +322,11 @@ export const AuthPortal = ({ initialView = 'welcome' }) => {
 
           {/* RIGHT SIDE: Wider Floating Frosted Acrylic Login Card (Stays firmly on the Right) */}
           <div className="w-full md:w-[500px] lg:w-[540px] flex items-center justify-center my-auto z-10 py-14 md:py-0 transform-gpu">
-            <div dir="ltr" className={`w-full max-w-lg rounded-[26px] sm:rounded-[32px] glass-acrylic-card transform-gpu p-5 sm:p-9 relative overflow-hidden shadow-2xl ${locale === 'ur' ? 'lang-ur' : ''}`}>
+            <div 
+              dir="ltr" 
+              style={{ backdropFilter: 'blur(16px) saturate(145%)', WebkitBackdropFilter: 'blur(16px) saturate(145%)' }}
+              className={`w-full max-w-lg rounded-[26px] sm:rounded-[32px] glass-acrylic-card transform-gpu p-5 sm:p-9 relative overflow-hidden shadow-2xl ${locale === 'ur' ? 'lang-ur' : ''}`}
+            >
               <div className="absolute -top-24 -left-24 w-72 h-72 bg-gradient-to-br from-white/20 via-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
               
               {/* Header */}

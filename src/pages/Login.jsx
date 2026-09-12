@@ -119,7 +119,10 @@ export const Login = () => {
         </div>
 
         {/* Ambient Info Card with true translucent crystalline glass */}
-        <div className="w-full max-w-xl space-y-3.5 p-6 lg:p-7 rounded-[30px] glass-acrylic-card relative overflow-hidden">
+        <div 
+          style={{ backdropFilter: 'blur(16px) saturate(145%)', WebkitBackdropFilter: 'blur(16px) saturate(145%)' }}
+          className="w-full max-w-xl space-y-3.5 p-6 lg:p-7 rounded-[30px] glass-acrylic-card relative overflow-hidden"
+        >
           <div className="absolute -top-16 -left-16 w-52 h-52 bg-white/10 rounded-full blur-2xl pointer-events-none" />
           
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/35 text-[11px] font-bold text-amber-200">
@@ -167,7 +170,10 @@ export const Login = () => {
         transition={{ duration: 0.68, ease: [0.16, 1, 0.3, 1] }}
         className="w-full md:w-[500px] lg:w-[540px] flex items-center justify-center my-auto z-10 py-4 md:py-0"
       >
-        <div className="w-full max-w-lg rounded-[32px] glass-acrylic-card p-7 sm:p-9 relative overflow-hidden">
+        <div 
+          style={{ backdropFilter: 'blur(16px) saturate(145%)', WebkitBackdropFilter: 'blur(16px) saturate(145%)' }}
+          className="w-full max-w-lg rounded-[32px] glass-acrylic-card p-7 sm:p-9 relative overflow-hidden"
+        >
           {/* Subtle frosted glass specular highlight arc */}
           <div className="absolute -top-24 -left-24 w-72 h-72 bg-gradient-to-br from-white/20 via-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
           

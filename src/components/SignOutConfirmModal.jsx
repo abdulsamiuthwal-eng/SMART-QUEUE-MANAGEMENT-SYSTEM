@@ -54,6 +54,7 @@ const SignOutConfirmModal = ({ isOpen, onClose, onConfirm }) => {
             exit={{ opacity: 0, scale: 0.92, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
             dir={isUrdu ? 'rtl' : 'ltr'}
+            style={{ backdropFilter: 'blur(20px) saturate(160%)', WebkitBackdropFilter: 'blur(20px) saturate(160%)' }}
             className="relative w-full max-w-md glass-acrylic-card rounded-3xl p-6 sm:p-7 border border-white/30 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),0_0_40px_rgba(244,63,94,0.12)] overflow-hidden z-10"
           >
             {/* Ambient background glow */}

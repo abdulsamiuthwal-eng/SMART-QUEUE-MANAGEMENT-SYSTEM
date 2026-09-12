@@ -113,7 +113,11 @@ export const Register = () => {
 
       <div className="w-full max-w-md lg:max-w-lg z-10 my-auto py-10 sm:py-4">
         {/* Translucent Frosted Glass Card */}
-        <div dir="ltr" className={`w-full glass-acrylic-card rounded-[26px] sm:rounded-[30px] p-4 sm:p-7 relative overflow-hidden ${locale === 'ur' ? 'lang-ur' : ''}`}>
+        <div 
+          dir="ltr" 
+          style={{ backdropFilter: 'blur(16px) saturate(145%)', WebkitBackdropFilter: 'blur(16px) saturate(145%)' }}
+          className={`w-full glass-acrylic-card rounded-[26px] sm:rounded-[30px] p-4 sm:p-7 relative overflow-hidden ${locale === 'ur' ? 'lang-ur' : ''}`}
+        >
           {/* Subtle frosted glass specular highlight */}
           <div className="absolute -top-24 -left-24 w-72 h-72 bg-gradient-to-br from-white/20 via-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
           
