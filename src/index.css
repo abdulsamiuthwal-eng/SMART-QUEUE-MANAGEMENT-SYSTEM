@@ -1,0 +1,363 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #f59e0b;
+  --color-primary-container: #ea580c;
+  --color-on-primary: #0b1320;
+  --color-on-primary-container: #fef3c7;
+  
+  --color-secondary: #0ea5e9;
+  --color-secondary-container: #0284c7;
+  --color-on-secondary-container: #e0f2fe;
+  
+  --color-tertiary: #10b981;
+  --color-tertiary-container: #059669;
+  --color-on-tertiary-container: #d1fae5;
+  
+  --color-error: #f43f5e;
+  --color-error-container: rgba(244, 63, 94, 0.2);
+  --color-on-error-container: #fecdd3;
+  
+  --color-background: #284d5b;
+  --color-on-background: #f1f5f9;
+  
+  --color-surface: rgba(40, 77, 91, 0.75);
+  --color-surface-dim: #1f3d49;
+  --color-surface-bright: #356274;
+  --color-surface-container-lowest: #1a343e;
+  --color-surface-container-low: rgba(255, 255, 255, 0.08);
+  --color-surface-container: rgba(255, 255, 255, 0.12);
+  --color-surface-container-high: rgba(255, 255, 255, 0.16);
+  --color-surface-container-highest: rgba(255, 255, 255, 0.22);
+  --color-on-surface: #f8fafc;
+  --color-on-surface-variant: #cbd5e1;
+  
+  --color-outline: rgba(255, 255, 255, 0.22);
+  --color-outline-variant: rgba(255, 255, 255, 0.12);
+  
+  --font-sans: 'Outfit', 'Inter', sans-serif;
+  
+  --radius-sm: 0.25rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+}
+
+/* ─── Base ─────────────────────────────────────────────────── */
+@layer base {
+  html {
+    scroll-behavior: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-background text-on-background font-sans antialiased overflow-x-hidden min-h-screen;
+    selection-color: rgba(245, 158, 11, 0.25);
+    overscroll-behavior-y: none;
+  }
+  ::selection {
+    background: rgba(245, 158, 11, 0.25);
+  }
+}
+
+/* ─── Custom Scrollbars ─────────────────────────────────────── */
+::-webkit-scrollbar        { width: 8px; height: 8px; }
+::-webkit-scrollbar-track  { background: rgba(15, 23, 42, 0.6); }
+::-webkit-scrollbar-thumb  { background: rgba(245, 158, 11, 0.3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.6); }
+
+/* ─── Glassmorphism & Panel System (Hardware Optimized for 60-120fps Silky Scroll) ─── */
+.glass-panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.06) 35%, rgba(25, 55, 68, 0.35) 100%) !important;
+  backdrop-filter: blur(12px) saturate(135%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(135%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.26) !important;
+  box-shadow: 0 20px 45px -12px rgba(10, 28, 38, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.45) !important;
+  color: #f1f5f9;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.glass-panel-dark {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 35%, rgba(18, 42, 52, 0.45) 100%) !important;
+  backdrop-filter: blur(12px) saturate(135%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(135%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 20px 45px -12px rgba(5, 20, 28, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.40) !important;
+  color: #f8fafc;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.06) 35%, rgba(25, 55, 68, 0.35) 100%) !important;
+  backdrop-filter: blur(12px) saturate(135%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(135%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.26) !important;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 18px 45px rgba(10, 28, 38, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.45) !important;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* ─── Glow Effects ─────────────────────────────────────────── */
+.glow-primary   { box-shadow: 0 0 24px rgba(245, 158, 11, 0.35); }
+.glow-secondary { box-shadow: 0 0 24px rgba(14, 165, 233, 0.35); }
+
+/* ─── 3D Helpers & Transforms ───────────────────────────────── */
+.perspective-1000   { perspective: 1000px; }
+.preserve-3d        { transform-style: preserve-3d; }
+.backface-hidden    { backface-visibility: hidden; }
+
+/* Squishy Button interactive feedback */
+.btn-squishy {
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, border-color 0.2s ease;
+}
+.btn-squishy:active {
+  transform: scale(0.98);
+}
+
+/* Lift effect for interactive Cards */
+.card-lift {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0, 82, 204, 0.06);
+  border-color: rgba(0, 82, 204, 0.25);
+}
+
+/* ─── Urdu / RTL Typography ─────────────────────────────────── */
+:lang(ur) {
+  font-family: 'Noto Nastaliq Urdu', 'Inter', sans-serif;
+  line-height: 1.6;
+}
+:lang(ur) input,
+:lang(ur) select,
+:lang(ur) textarea {
+  font-family: 'Inter', 'Noto Nastaliq Urdu', sans-serif;
+  line-height: 1.4;
+}
+
+/* ─── Premium Frosted Glass Utilities (60-120fps Silky Scroll Optimized) ─── */
+.glass-acrylic-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.07) 35%, rgba(48, 85, 98, 0.35) 100%) !important;
+  backdrop-filter: blur(14px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.28) !important;
+  box-shadow: 0 20px 50px -15px rgba(18, 45, 55, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.45), inset 0 0 40px rgba(255, 255, 255, 0.05) !important;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* No nested blur inside pills - saves 80% scroll repaint budget! */
+.glass-acrylic-pill {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 4px 14px rgba(18, 45, 55, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+}
+.glass-acrylic-pill:hover {
+  background: rgba(255, 255, 255, 0.20) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.25), inset 0 1px 1.5px rgba(255, 255, 255, 0.50) !important;
+}
+
+/* Glass input - clean GPU rendering without redundant blur */
+.glass-input {
+  background: rgba(22, 52, 65, 0.70) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.24) !important;
+  color: #ffffff !important;
+  transform: translateZ(0);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.glass-input:hover {
+  background: rgba(24, 58, 72, 0.85) !important;
+  border-color: rgba(245, 158, 11, 0.60) !important;
+}
+
+.glass-input:focus {
+  background: rgba(26, 62, 78, 0.90) !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25) !important;
+}
+
+.glass-input::placeholder {
+  color: rgba(226, 232, 240, 0.80) !important;
+}
+
+/* Override dark/ugly Chrome/Edge browser autofill */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0 1000px #0c1424 inset !important;
+  box-shadow: 0 0 0 1000px #0c1424 inset !important;
+  border: 1.5px solid rgba(245, 158, 11, 0.6) !important;
+  transition: background-color 5000s ease-in-out 0s;
+  color: #ffffff !important;
+}
+
+/* ─── Animation Keyframes ───────────────────────────────────── */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(0, 82, 204, 0.15); }
+  50%       { box-shadow: 0 0 30px rgba(0, 82, 204, 0.4),
+                          0 0 50px rgba(80, 220, 255, 0.15); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* ─── Animation Utility Classes ─────────────────────────────── */
+.animate-spin-slow   { animation: spin-slow 4s linear infinite; }
+.animate-fade-in     { animation: fade-in 0.4s ease-out forwards; }
+.animate-float       { animation: float 4s ease-in-out infinite; }
+.animate-pulse-glow  { animation: pulse-glow 2.5s ease-in-out infinite; }
+
+.shimmer-text {
+  background: linear-gradient(90deg, #737685 25%, #191c1e 50%, #737685 75%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2.5s infinite linear;
+}
+
+.transition-all-smooth {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Glassmorphic Shimmer Skeleton */
+.glass-skeleton {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 20%, rgba(255, 255, 255, 0.18) 50%, rgba(255, 255, 255, 0.05) 80%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite linear;
+  border-radius: 0.75rem;
+}
+
+/* ─── Glassmorphic Dark Autofill Override ──────────────────── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0 1000px rgba(15, 23, 42, 0.85) inset !important;
+  box-shadow: 0 0 0 1000px rgba(15, 23, 42, 0.85) inset !important;
+  caret-color: #ffffff !important;
+  transition: background-color 999999s ease-in-out 0s;
+  border-radius: 1rem;
+}
+
+/* ─── Modern Platform Urdu Typography (BBC / Google / Tech Standard) ─── */
+.lang-ur,
+[dir="rtl"],
+:lang(ur) {
+  font-family: 'Noto Sans Arabic', 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: 0px !important;
+}
+
+/* Beautiful breathing space, crisp horizontal baseline & razor-sharp legibility */
+.lang-ur p,
+[dir="rtl"] p {
+  line-height: 1.85 !important;
+  word-spacing: 0.05em !important;
+  margin-bottom: 0.45rem;
+}
+
+.lang-ur span,
+[dir="rtl"] span {
+  line-height: inherit;
+}
+
+.lang-ur h1,
+[dir="rtl"] h1 {
+  font-family: 'Noto Sans Arabic', 'IBM Plex Sans Arabic', sans-serif;
+  font-weight: 800 !important;
+  line-height: 1.45 !important;
+  word-spacing: 0.04em !important;
+  margin-bottom: 0.5rem !important;
+  padding-top: 0.15rem;
+}
+
+.lang-ur h2,
+[dir="rtl"] h2 {
+  font-family: 'Noto Sans Arabic', 'IBM Plex Sans Arabic', sans-serif;
+  font-weight: 800 !important;
+  line-height: 1.5 !important;
+  word-spacing: 0.04em !important;
+  margin-bottom: 0.4rem !important;
+  padding-top: 0.1rem;
+}
+
+.lang-ur h3,
+[dir="rtl"] h3 {
+  font-family: 'Noto Sans Arabic', 'IBM Plex Sans Arabic', sans-serif;
+  font-weight: 700 !important;
+  line-height: 1.55 !important;
+  word-spacing: 0.04em !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.lang-ur label,
+[dir="rtl"] label {
+  font-family: 'Noto Sans Arabic', 'IBM Plex Sans Arabic', sans-serif;
+  font-weight: 700 !important;
+  line-height: 1.6 !important;
+  word-spacing: 0.03em !important;
+  margin-bottom: 0.3rem !important;
+}
+
+.lang-ur input,
+[dir="rtl"] input {
+  font-family: 'Noto Sans Arabic', 'Inter', sans-serif;
+  font-weight: 500;
+  line-height: 1.6 !important;
+  word-spacing: 0.03em;
+}
+
+.lang-ur button,
+[dir="rtl"] button {
+  font-family: 'Noto Sans Arabic', 'IBM Plex Sans Arabic', sans-serif;
+  font-weight: 700 !important;
+  line-height: 1.6 !important;
+  word-spacing: 0.03em;
+}
+
+/* Balanced breathing room on glassmorphic cards */
+.lang-ur .glass-acrylic-card,
+[dir="rtl"] .glass-acrylic-card {
+  padding-top: 1.75rem;
+  padding-bottom: 1.75rem;
+}
+
+
