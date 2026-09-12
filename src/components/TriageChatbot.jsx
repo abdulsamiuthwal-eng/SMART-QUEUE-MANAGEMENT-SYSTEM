@@ -204,13 +204,13 @@ export const TriageChatbot = ({
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-[#e57342] via-[#ff9655] to-[#e57342] text-slate-950 font-black shadow-2xl shadow-orange-950/60 border border-amber-300/50 cursor-pointer backdrop-blur-xl group"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-full bg-gradient-to-r from-[#e57342] via-[#ff9655] to-[#e57342] text-slate-950 font-black shadow-2xl shadow-orange-950/60 border border-amber-300/50 cursor-pointer backdrop-blur-xl group"
       >
         <div className="relative">
-          <Bot size={22} className="text-slate-950 transition-transform group-hover:rotate-12" />
+          <Bot size={20} className="text-slate-950 transition-transform group-hover:rotate-12" />
           <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-950 animate-pulse" />
         </div>
-        <span className="text-xs font-black tracking-wide drop-shadow-sm">
+        <span className="text-[11px] sm:text-xs font-black tracking-wide drop-shadow-sm">
           {mode === 'patient' 
             ? (locale === 'ur' ? 'AI ٹرائیج باٹ' : 'AI Symptom Triage') 
             : (locale === 'ur' ? 'AI کلینک اسسٹنٹ' : 'Clinic AI Ops')}
@@ -225,7 +225,7 @@ export const TriageChatbot = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-24 right-4 sm:right-8 z-50 w-[92vw] sm:w-[420px] h-[540px] max-h-[82vh] rounded-[30px] glass-acrylic-card border border-white/25 bg-[#142834]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden select-none"
+            className="fixed bottom-16 right-2 left-2 sm:left-auto sm:bottom-24 sm:right-8 z-50 sm:w-[420px] h-[520px] max-h-[82vh] rounded-[28px] sm:rounded-[30px] glass-acrylic-card border border-white/25 bg-[#142834]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden select-none"
           >
             {/* Header */}
             <div className="px-5 py-4 border-b border-white/15 bg-white/[0.04] flex justify-between items-center relative">

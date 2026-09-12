@@ -249,14 +249,14 @@ export const AuthPortal = ({ initialView = 'welcome' }) => {
         {/* Layout direction is locked to LTR so cards stay firmly anchored on left and right */}
         <section 
           dir="ltr"
-          className="w-screen h-screen shrink-0 relative z-10 flex flex-col md:flex-row items-center justify-between p-4 sm:p-6 lg:p-10 overflow-y-auto"
+          className="w-screen h-screen shrink-0 relative z-10 flex flex-col md:flex-row items-center justify-between p-3 sm:p-6 lg:p-10 overflow-y-auto"
         >
           {/* Back to Welcome Screen Pill (Firmly anchored Top-Left) */}
-          <div className="absolute top-4 left-4 z-40">
+          <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-40">
             <button
               type="button"
               onClick={handleBackToWelcome}
-              className="group flex items-center gap-2 px-4 py-2 rounded-full bg-black/50 hover:bg-black/70 border border-white/20 hover:border-amber-400/50 backdrop-blur-md text-white font-bold transition-all cursor-pointer text-xs select-none shadow-xl hover:scale-105 active:scale-95"
+              className="group flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-black/50 hover:bg-black/70 border border-white/20 hover:border-amber-400/50 backdrop-blur-md text-white font-bold transition-all cursor-pointer text-[11px] sm:text-xs select-none shadow-xl hover:scale-105 active:scale-95"
             >
               <ArrowLeft size={14} className="text-amber-300 transition-transform group-hover:-translate-x-1" />
               <span>{t('login.home')}</span>
@@ -318,8 +318,8 @@ export const AuthPortal = ({ initialView = 'welcome' }) => {
           </div>
 
           {/* RIGHT SIDE: Wider Floating Frosted Acrylic Login Card (Stays firmly on the Right) */}
-          <div className="w-full md:w-[500px] lg:w-[540px] flex items-center justify-center my-auto z-10 py-4 md:py-0 transform-gpu">
-            <div dir="ltr" className={`w-full max-w-lg rounded-[32px] glass-acrylic-card transform-gpu p-7 sm:p-9 relative overflow-hidden shadow-2xl ${locale === 'ur' ? 'lang-ur' : ''}`}>
+          <div className="w-full md:w-[500px] lg:w-[540px] flex items-center justify-center my-auto z-10 py-14 md:py-0 transform-gpu">
+            <div dir="ltr" className={`w-full max-w-lg rounded-[26px] sm:rounded-[32px] glass-acrylic-card transform-gpu p-5 sm:p-9 relative overflow-hidden shadow-2xl ${locale === 'ur' ? 'lang-ur' : ''}`}>
               <div className="absolute -top-24 -left-24 w-72 h-72 bg-gradient-to-br from-white/20 via-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
               
               {/* Header */}

@@ -63,19 +63,34 @@
   }
 }
 
-/* ─── Custom Scrollbars ─────────────────────────────────────── */
-::-webkit-scrollbar        { width: 8px; height: 8px; }
-::-webkit-scrollbar-track  { background: rgba(15, 23, 42, 0.6); }
-::-webkit-scrollbar-thumb  { background: rgba(245, 158, 11, 0.3); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.6); }
+/* ─── Universal Invisible Scrollbars (Fast Professional Scroll Everywhere) ─── */
+*::-webkit-scrollbar,
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+*,
+html,
+body {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none !important; }
+.no-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
 
 /* ─── Glassmorphism & Panel System (Hardware Optimized for 60-120fps Silky Scroll) ─── */
 .glass-panel {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.06) 35%, rgba(25, 55, 68, 0.35) 100%) !important;
-  backdrop-filter: blur(12px) saturate(135%) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(135%) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.26) !important;
-  box-shadow: 0 20px 45px -12px rgba(10, 28, 38, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.45) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.07) 35%, rgba(255, 255, 255, 0.02) 100%) !important;
+  backdrop-filter: blur(20px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.45), inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.70), inset 0 -1px 1px 0 rgba(255, 255, 255, 0.15) !important;
   color: #f1f5f9;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
@@ -84,24 +99,25 @@
 }
 
 .glass-panel-dark {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 35%, rgba(18, 42, 52, 0.45) 100%) !important;
-  backdrop-filter: blur(12px) saturate(135%) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(135%) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
-  box-shadow: 0 20px 45px -12px rgba(5, 20, 28, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.40) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.06) 35%, rgba(255, 255, 255, 0.02) 100%) !important;
+  backdrop-filter: blur(20px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.30) !important;
+  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.55), inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.60), inset 0 -1px 1px 0 rgba(255, 255, 255, 0.12) !important;
   color: #f8fafc;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .glass-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.06) 35%, rgba(25, 55, 68, 0.35) 100%) !important;
-  backdrop-filter: blur(12px) saturate(135%) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(135%) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.26) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.07) 35%, rgba(255, 255, 255, 0.02) 100%) !important;
+  backdrop-filter: blur(20px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
   border-radius: var(--radius-xl);
-  box-shadow: 0 18px 45px rgba(10, 28, 38, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.45), inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.70), inset 0 -1px 1px 0 rgba(255, 255, 255, 0.15) !important;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   backface-visibility: hidden;
@@ -146,41 +162,46 @@
   line-height: 1.4;
 }
 
-/* ─── Premium Frosted Glass Utilities (60-120fps Silky Scroll Optimized) ─── */
+/* ─── Premium Frosted Glass Utilities (Login Screen Crystal Glass Standard) ─── */
 .glass-acrylic-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.07) 35%, rgba(48, 85, 98, 0.35) 100%) !important;
-  backdrop-filter: blur(14px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.28) !important;
-  box-shadow: 0 20px 50px -15px rgba(18, 45, 55, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.45), inset 0 0 40px rgba(255, 255, 255, 0.05) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.08) 35%, rgba(255, 255, 255, 0.02) 70%, rgba(255, 255, 255, 0.07) 100%) !important;
+  backdrop-filter: blur(22px) saturate(165%) contrast(104%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(165%) contrast(104%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.38) !important;
+  box-shadow: 
+    0 24px 60px -12px rgba(0, 0, 0, 0.50), 
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.75), 
+    inset 0 -1px 1px 0 rgba(255, 255, 255, 0.15), 
+    inset 0 0 45px rgba(255, 255, 255, 0.06) !important;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 
-/* No nested blur inside pills - saves 80% scroll repaint budget! */
+/* Glass acrylic pills with crystal double-inset highlight */
 .glass-acrylic-pill {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
-  box-shadow: 0 4px 14px rgba(18, 45, 55, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.30) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.50) !important;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   backface-visibility: hidden;
 }
 .glass-acrylic-pill:hover {
-  background: rgba(255, 255, 255, 0.20) !important;
-  border-color: rgba(255, 255, 255, 0.45) !important;
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.25), inset 0 1px 1.5px rgba(255, 255, 255, 0.50) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.09) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.25), inset 0 1px 1.5px rgba(255, 255, 255, 0.70) !important;
 }
 
-/* Glass input - clean GPU rendering without redundant blur */
+/* Glass input - crystal GPU rendering with crisp highlight */
 .glass-input {
-  background: rgba(22, 52, 65, 0.70) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.24) !important;
+  background: rgba(14, 34, 44, 0.55) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.28) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.20) !important;
   color: #ffffff !important;
   transform: translateZ(0);
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .glass-input:hover {

@@ -96,13 +96,13 @@ export const Register = () => {
       </div>
 
       {/* Floating Glassy Back to Login Navigation */}
-      <div className={`fixed top-4 z-50 ${locale === 'ur' ? 'right-4' : 'left-4'}`}>
+      <div className={`fixed z-50 ${locale === 'ur' ? 'right-3 sm:right-4' : 'left-3 sm:left-4'} top-3 sm:top-4`}>
         <Link
           to="/login"
-          className="group inline-flex items-center gap-2.5 px-4 py-2 rounded-full glass-acrylic-pill text-xs font-bold text-white transition-all cursor-pointer select-none"
+          className="group inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full glass-acrylic-pill text-[11px] sm:text-xs font-bold text-white transition-all cursor-pointer select-none"
         >
           <ArrowLeft 
-            size={14} 
+            size={13} 
             className={`text-amber-300 transition-transform duration-300 ease-out ${
               locale === 'ur' ? 'rotate-180 group-hover:translate-x-1' : 'group-hover:-translate-x-1'
             }`} 
@@ -111,15 +111,15 @@ export const Register = () => {
         </Link>
       </div>
 
-      <div className="w-full max-w-md lg:max-w-lg z-10 my-auto py-2">
+      <div className="w-full max-w-md lg:max-w-lg z-10 my-auto py-10 sm:py-4">
         {/* Translucent Frosted Glass Card */}
-        <div dir="ltr" className={`w-full glass-acrylic-card rounded-[30px] p-5 sm:p-7 relative overflow-hidden ${locale === 'ur' ? 'lang-ur' : ''}`}>
+        <div dir="ltr" className={`w-full glass-acrylic-card rounded-[26px] sm:rounded-[30px] p-4 sm:p-7 relative overflow-hidden ${locale === 'ur' ? 'lang-ur' : ''}`}>
           {/* Subtle frosted glass specular highlight */}
           <div className="absolute -top-24 -left-24 w-72 h-72 bg-gradient-to-br from-white/20 via-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
           
           <div className="flex flex-col items-center mb-4 text-center">
-            <SmartQueueLogo size={54} animated={true} className="mb-1.5" />
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-md">
+            <SmartQueueLogo size={48} animated={true} className="mb-1.5" />
+            <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight drop-shadow-md">
               {t('register.title')}
             </h2>
             <div className="inline-flex items-center gap-1 px-2.5 py-0.5 mt-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-[10px] font-bold text-emerald-300">

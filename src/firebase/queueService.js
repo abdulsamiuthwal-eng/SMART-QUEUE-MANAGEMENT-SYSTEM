@@ -186,9 +186,10 @@ export const queueService = {
   },
 
   // 4. Token Booking (Includes Emergency Triage Priority support)
-  bookToken: async (orgId, deptName, patientId, patientName, patientPhone, type, preferredTime = '', isEmergency = false, urgencyReason = '') => {
+  bookToken: async (orgId, deptName, patientId, patientName, patientPhone, type, preferredTime = '', isEmergency = false, urgencyReason = '', preferredDate = '') => {
     const tokenId = `token_${Date.now()}`;
     const timestamp = Date.now();
+    const resolvedDate = preferredDate || new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 
     if (isMockEnabled) {
       const db = getMockDB();
@@ -218,10 +219,11 @@ export const queueService = {
         patientName,
         patientPhone,
         type, // 'walk-in' | 'appointment'
+        preferredDate: resolvedDate,
         preferredTime,
         isEmergency,
         urgencyReason: urgencyReason || (isEmergency ? 'Critical / Urgent Medical Attention' : ''),
-        status: 'waiting', // 'waiting' | 'serving' | 'completed' | 'skipped'
+        status: 'waiting', // 'waiting' | 'serving' | 'completed' | 'skipped' | 'cancelled'
         timestamp,
         estWaitTime
       };
@@ -253,6 +255,7 @@ export const queueService = {
         patientName,
         patientPhone,
         type,
+        preferredDate: resolvedDate,
         preferredTime,
         isEmergency,
         urgencyReason: urgencyReason || (isEmergency ? 'Critical / Urgent Medical Attention' : ''),
@@ -267,36 +270,162 @@ export const queueService = {
   },
 
   // 5. Patient Actions: Reschedule Token
-  rescheduleToken: async (orgId, deptName, tokenId, newPreferredTime) => {
+  rescheduleToken: async (orgId, deptName, tokenId, newPreferredTime, newPreferredDate = '') => {
     if (isMockEnabled) {
       const db = getMockDB();
       if (!db.queues[orgId] || !db.queues[orgId][deptName]) return;
       
       const token = db.queues[orgId][deptName].find(t => t.tokenId === tokenId);
       if (token) {
+        const prevSlot = `${token.preferredDate ? token.preferredDate + ' ' : ''}${token.preferredTime || ''}`.trim();
+        token.originalSlot = token.originalSlot || prevSlot || 'Initial Slot';
         token.preferredTime = newPreferredTime;
+        if (newPreferredDate) {
+          token.preferredDate = newPreferredDate;
+        }
+        token.rescheduled = true;
+        token.rescheduleCount = (token.rescheduleCount || 0) + 1;
+        token.rescheduledAt = Date.now();
         token.type = 'appointment';
         saveMockDB(db);
       }
     } else {
-      await update(ref(database, `queues/${orgId}/${deptName}/${tokenId}`), {
+      const tokenRef = ref(database, `queues/${orgId}/${deptName}/${tokenId}`);
+      const snap = await get(tokenRef);
+      const prevData = snap.exists() ? snap.val() : {};
+      const prevSlot = `${prevData.preferredDate ? prevData.preferredDate + ' ' : ''}${prevData.preferredTime || ''}`.trim();
+
+      await update(tokenRef, {
         preferredTime: newPreferredTime,
+        preferredDate: newPreferredDate || prevData.preferredDate || new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
+        originalSlot: prevData.originalSlot || prevSlot || 'Initial Slot',
+        rescheduled: true,
+        rescheduleCount: (prevData.rescheduleCount || 0) + 1,
+        rescheduledAt: Date.now(),
         type: 'appointment'
       });
     }
   },
 
-  // 6. Patient Actions: Cancel Token
-  cancelToken: async (orgId, deptName, tokenId) => {
+  // 6. Patient Actions: Cancel Token (Persists status for history instead of hard-deleting)
+  cancelToken: async (orgId, deptName, tokenId, reason = 'Cancelled by Patient') => {
     if (isMockEnabled) {
       const db = getMockDB();
       if (!db.queues[orgId] || !db.queues[orgId][deptName]) return;
 
-      db.queues[orgId][deptName] = db.queues[orgId][deptName].filter(t => t.tokenId !== tokenId);
-      saveMockDB(db);
+      const token = db.queues[orgId][deptName].find(t => t.tokenId === tokenId);
+      if (token) {
+        token.status = 'cancelled';
+        token.cancelledAt = Date.now();
+        token.cancellationReason = reason;
+        saveMockDB(db);
+      }
     } else {
-      await remove(ref(database, `queues/${orgId}/${deptName}/${tokenId}`));
+      await update(ref(database, `queues/${orgId}/${deptName}/${tokenId}`), {
+        status: 'cancelled',
+        cancelledAt: Date.now(),
+        cancellationReason: reason
+      });
     }
+  },
+
+  // 6b. Patient Actions: Fetch complete clinic history for patient
+  getPatientClinicHistory: async (orgId, patientId) => {
+    if (!orgId || !patientId) return [];
+
+    let allTokens = [];
+
+    if (isMockEnabled) {
+      const db = getMockDB();
+      const clinicQueues = db.queues[orgId] || {};
+      
+      Object.keys(clinicQueues).forEach(deptName => {
+        const tokens = clinicQueues[deptName] || [];
+        tokens.forEach(t => {
+          if (t.patientId === patientId) {
+            allTokens.push({ ...t, deptName });
+          }
+        });
+      });
+
+      // If user has no history yet at mock_clinic_1, provide realistic seed history
+      if (allTokens.length === 0 && orgId === 'mock_clinic_1') {
+        const now = Date.now();
+        const seedHistory = [
+          {
+            tokenId: `seed_completed_1_${patientId}`,
+            tokenNumber: 4,
+            patientId,
+            patientName: 'Patient',
+            deptName: 'General Medicine',
+            type: 'appointment',
+            preferredDate: new Date(now - 3 * 24 * 3600 * 1000).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
+            preferredTime: '10:30 AM',
+            status: 'completed',
+            timestamp: now - 3 * 24 * 3600 * 1000,
+            completedAt: now - 3 * 24 * 3600 * 1000 + 45 * 60 * 1000,
+            doctorNotes: 'Consultation completed. Prescribed multivitamins.'
+          },
+          {
+            tokenId: `seed_rescheduled_1_${patientId}`,
+            tokenNumber: 7,
+            patientId,
+            patientName: 'Patient',
+            deptName: 'Cardiology',
+            type: 'appointment',
+            preferredDate: new Date(now - 7 * 24 * 3600 * 1000).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
+            preferredTime: '03:15 PM',
+            originalSlot: '11:00 AM',
+            rescheduled: true,
+            rescheduleCount: 1,
+            status: 'completed',
+            timestamp: now - 7 * 24 * 3600 * 1000,
+            completedAt: now - 7 * 24 * 3600 * 1000 + 60 * 60 * 1000,
+            doctorNotes: 'ECG review completed. Normal sinus rhythm.'
+          },
+          {
+            tokenId: `seed_cancelled_1_${patientId}`,
+            tokenNumber: 1,
+            patientId,
+            patientName: 'Patient',
+            deptName: 'ENT',
+            type: 'walk-in',
+            preferredDate: new Date(now - 14 * 24 * 3600 * 1000).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
+            preferredTime: '09:00 AM',
+            status: 'cancelled',
+            timestamp: now - 14 * 24 * 3600 * 1000,
+            cancelledAt: now - 14 * 24 * 3600 * 1000 + 15 * 60 * 1000,
+            cancellationReason: 'Cancelled by Patient'
+          }
+        ];
+
+        if (!db.queues['mock_clinic_1']) db.queues['mock_clinic_1'] = {};
+        seedHistory.forEach(st => {
+          if (!db.queues['mock_clinic_1'][st.deptName]) db.queues['mock_clinic_1'][st.deptName] = [];
+          db.queues['mock_clinic_1'][st.deptName].push(st);
+        });
+        saveMockDB(db);
+        allTokens = seedHistory;
+      }
+    } else {
+      const queueRef = ref(database, `queues/${orgId}`);
+      const snapshot = await get(queueRef);
+      if (snapshot.exists()) {
+        const queues = snapshot.val();
+        Object.keys(queues).forEach(deptName => {
+          const tokensObj = queues[deptName] || {};
+          const tokens = Object.values(tokensObj);
+          tokens.forEach(t => {
+            if (t.patientId === patientId) {
+              allTokens.push({ ...t, deptName });
+            }
+          });
+        });
+      }
+    }
+
+    allTokens.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    return allTokens;
   },
 
   // 7. Org Actions: Call Next Patient (Emergency priority first, then FIFO)
