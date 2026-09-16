@@ -14,6 +14,17 @@ import SplashScreen from './components/SplashScreen';
 import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 
+import dashboardLoungeArt from './assets/dashboard_lounge.webp';
+import queueLoungeArt from './assets/queue_lounge_art.webp';
+
+// Eager Background Cache: Loads 4K artwork into browser memory immediately on first visit
+if (typeof window !== 'undefined') {
+  const p1 = new Image();
+  p1.src = dashboardLoungeArt;
+  const p2 = new Image();
+  p2.src = queueLoungeArt;
+}
+
 // Guard that locks down dashboard access based on the patient/org role
 const RoleGuard = ({ children, allowedRole }) => {
   const { currentUser } = useAuth();

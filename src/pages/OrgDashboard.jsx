@@ -329,7 +329,7 @@ export const OrgDashboard = () => {
     <div dir="ltr" className={`min-h-screen bg-[#11242d] text-slate-100 pb-16 relative overflow-x-clip select-none ${locale === 'ur' ? 'lang-ur' : 'font-sans'}`}>
       {/* 1. ATMOSPHERIC BACKGROUND WITH CLINIC LOUNGE ART */}
       <div 
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat z-0 pointer-events-none"
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat z-0 pointer-events-none bg-[#11242d] transition-opacity duration-700 ease-out"
         style={{ backgroundImage: `url(${dashboardLoungeArt})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-[#132732]/78 via-[#18313e]/68 to-[#10212a]/82" />
