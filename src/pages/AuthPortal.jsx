@@ -117,14 +117,21 @@ export const AuthPortal = ({ initialView = 'welcome' }) => {
     }
   };
 
-  const fillDemo = (role) => {
+  const fillDemo = async (role) => {
     setError('');
-    if (role === 'patient') {
-      setEmail('patient@demo.com');
-      setPassword('demo123');
-    } else {
-      setEmail('clinic@demo.com');
-      setPassword('demo123');
+    const demoEmail = role === 'patient' ? 'patient@demo.com' : 'clinic@demo.com';
+    const demoPassword = 'demo123';
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    setLoading(true);
+
+    try {
+      const user = await login(demoEmail, demoPassword);
+      handleLoginSuccess(user);
+    } catch (err) {
+      console.error("Demo login error:", err);
+      setError(t('auth.invalidCreds'));
+      setLoading(false);
     }
   };
 

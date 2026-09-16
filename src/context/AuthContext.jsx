@@ -217,9 +217,63 @@ export const AuthProvider = ({ children }) => {
       setCurrentUser(matchedUser);
       return matchedUser;
     } else {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const profile = await queueService.getUserProfile(userCredential.user.uid);
-      return { ...userCredential.user, ...profile };
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        let profile = await queueService.getUserProfile(userCredential.user.uid);
+        if (!profile) {
+          const isClinic = email.toLowerCase().includes('clinic');
+          profile = isClinic
+            ? {
+                hospitalName: 'City Care Hospital (Demo)',
+                email: 'clinic@demo.com',
+                phone: '0300-1234567',
+                address: 'Medical Complex, Karachi',
+                role: 'org'
+              }
+            : {
+                name: 'Ali Khan (Demo)',
+                email: 'patient@demo.com',
+                phone: '0312-7654321',
+                role: 'patient'
+              };
+          await queueService.createUserProfile(userCredential.user.uid, profile);
+        }
+        return { ...userCredential.user, ...profile };
+      } catch (authErr) {
+        // If it's a demo account and doesn't exist yet on this fresh Firebase project, automatically create it!
+        const isDemo = (email.toLowerCase() === 'clinic@demo.com' || email.toLowerCase() === 'patient@demo.com') && password === 'demo123';
+        if (isDemo) {
+          try {
+            const isClinic = email.toLowerCase() === 'clinic@demo.com';
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const profile = isClinic
+              ? {
+                  hospitalName: 'City Care Hospital (Demo)',
+                  email: 'clinic@demo.com',
+                  phone: '0300-1234567',
+                  address: 'Medical Complex, Karachi',
+                  role: 'org'
+                }
+              : {
+                  name: 'Ali Khan (Demo)',
+                  email: 'patient@demo.com',
+                  phone: '0312-7654321',
+                  role: 'patient'
+                };
+            await queueService.createUserProfile(userCredential.user.uid, profile);
+            if (isClinic) {
+              await queueService.addDepartment(userCredential.user.uid, 'General OPD', 10);
+              await queueService.addDepartment(userCredential.user.uid, 'Emergency', 5);
+              await queueService.addDepartment(userCredential.user.uid, 'Cardiology', 15);
+            }
+            return { ...userCredential.user, ...profile };
+          } catch (createErr) {
+            console.error("Auto-provisioning demo user failed:", createErr);
+            throw authErr;
+          }
+        }
+        throw authErr;
+      }
     }
   };
 
