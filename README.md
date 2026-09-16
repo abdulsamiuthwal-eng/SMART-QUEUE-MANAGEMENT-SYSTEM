@@ -1,6 +1,6 @@
-# React + Vite
+# 🏥 SMART QUEUE MANAGEMENT SYSTEM (Healthcare Flow)
+> For complete technical, conceptual, and architectural documentation, see **[MASTER_PROJECT.md](file:///c:/Users/abdul/Desktop/SMART%20QUEUE%20MANAGEMENT%20SYSTEM/MASTER_PROJECT.md)** and **[PROJECT_DOCUMENTATION.md](file:///c:/Users/abdul/Desktop/SMART%20QUEUE%20MANAGEMENT%20SYSTEM/PROJECT_DOCUMENTATION.md)**.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
 
