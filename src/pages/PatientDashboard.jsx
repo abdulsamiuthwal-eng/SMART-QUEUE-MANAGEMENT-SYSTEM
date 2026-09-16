@@ -546,9 +546,12 @@ export const PatientDashboard = () => {
               animate="visible"
               variants={fadeScrollVariants}
               whileHover={{ y: -3, transition: { duration: 0.2 } }}
-              className="glass-acrylic-card rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 lg:p-7 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6 relative overflow-hidden shadow-2xl"
+              className="glass-acrylic-card rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 lg:p-7 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6 relative shadow-2xl z-30"
             >
-              <div className="absolute -top-24 -left-24 w-72 h-72 bg-gradient-to-br from-white/25 via-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
+              {/* Inner ambient glow container clipped to card corners */}
+              <div className="absolute inset-0 rounded-[24px] sm:rounded-[32px] overflow-hidden pointer-events-none z-0">
+                <div className="absolute -top-24 -left-24 w-72 h-72 bg-gradient-to-br from-white/25 via-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
+              </div>
               <div className="relative z-10">
                 <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight drop-shadow-md">
                   {t('patient.welcome')} <span className="text-amber-400">{currentUser?.name || 'Friend'}!</span>
