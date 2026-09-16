@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Calendar, ChevronUp, ChevronDown, Check, Sparkles, CalendarDays } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useLanguage } from '../context/LanguageContext';
 
 /**
  * Premium Glass Date & Time Scheduler
@@ -14,6 +15,8 @@ export const GlassTimeScheduler = ({
   onDateChange,
   className = '',
 }) => {
+  const { t, locale } = useLanguage();
+
   // Generate next 7 upcoming days
   const upcomingDays = React.useMemo(() => {
     const days = [];
@@ -22,8 +25,8 @@ export const GlassTimeScheduler = ({
       const d = new Date(today);
       d.setDate(today.getDate() + i);
       const iso = d.toISOString().split('T')[0];
-      const dayName = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'short' });
-      const dateFormatted = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+      const dayName = i === 0 ? t('scheduler.today') : i === 1 ? t('scheduler.tomorrow') : d.toLocaleDateString(locale === 'ur' ? 'ur-PK' : 'en-US', { weekday: 'short' });
+      const dateFormatted = d.toLocaleDateString(locale === 'ur' ? 'ur-PK' : 'en-US', { day: 'numeric', month: 'short' });
       days.push({
         iso,
         dayName,
@@ -32,7 +35,7 @@ export const GlassTimeScheduler = ({
       });
     }
     return days;
-  }, []);
+  }, [locale, t]);
 
   const todayIso = upcomingDays[0]?.iso || new Date().toISOString().split('T')[0];
   const [internalDate, setInternalDate] = useState(selectedDate || todayIso);
@@ -55,8 +58,8 @@ export const GlassTimeScheduler = ({
     if (val) {
       setInternalDate(val);
       const d = new Date(val);
-      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
-      const dateFormatted = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+      const dayName = d.toLocaleDateString(locale === 'ur' ? 'ur-PK' : 'en-US', { weekday: 'short' });
+      const dateFormatted = d.toLocaleDateString(locale === 'ur' ? 'ur-PK' : 'en-US', { day: 'numeric', month: 'short' });
       if (onDateChange) {
         onDateChange(val, `${dayName}, ${dateFormatted}`);
       }
@@ -124,12 +127,12 @@ export const GlassTimeScheduler = ({
 
   // Express pre-set slots
   const quickSlots = [
-    { label: '09:30 AM', val: '09:30', tag: 'Morning' },
-    { label: '11:00 AM', val: '11:00', tag: 'Morning' },
-    { label: '02:30 PM', val: '14:30', tag: 'Afternoon' },
-    { label: '04:00 PM', val: '16:00', tag: 'Afternoon' },
-    { label: '05:30 PM', val: '17:30', tag: 'Evening' },
-    { label: '07:00 PM', val: '19:00', tag: 'Evening' },
+    { label: '09:30 AM', val: '09:30', tag: t('scheduler.morning') },
+    { label: '11:00 AM', val: '11:00', tag: t('scheduler.morning') },
+    { label: '02:30 PM', val: '14:30', tag: t('scheduler.afternoon') },
+    { label: '04:00 PM', val: '16:00', tag: t('scheduler.afternoon') },
+    { label: '05:30 PM', val: '17:30', tag: t('scheduler.evening') },
+    { label: '07:00 PM', val: '19:00', tag: t('scheduler.evening') },
   ];
 
   const handleSelectSlot = (slotVal) => {
@@ -146,7 +149,7 @@ export const GlassTimeScheduler = ({
     ? activeDayObj.fullDisplay 
     : (() => {
         const d = new Date(internalDate);
-        return isNaN(d.getTime()) ? internalDate : `${d.toLocaleDateString('en-US', { weekday: 'short' })}, ${d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`;
+        return isNaN(d.getTime()) ? internalDate : `${d.toLocaleDateString(locale === 'ur' ? 'ur-PK' : 'en-US', { weekday: 'short' })}, ${d.toLocaleDateString(locale === 'ur' ? 'ur-PK' : 'en-US', { day: 'numeric', month: 'short' })}`;
       })();
 
   return (
@@ -156,7 +159,7 @@ export const GlassTimeScheduler = ({
         <div className="flex items-center justify-between mb-1.5 px-1">
           <span className="text-[10px] font-bold text-slate-200 uppercase tracking-widest flex items-center gap-1.5">
             <CalendarDays size={12} className="text-amber-400" />
-            <span>Select Appointment Day</span>
+            <span>{t('scheduler.selectDay')}</span>
           </span>
           <span className="text-[10px] text-amber-300 font-bold font-mono">
             {activeDateDisplay}
@@ -193,7 +196,7 @@ export const GlassTimeScheduler = ({
         <div className="mt-2 flex items-center justify-between gap-2 px-1">
           <label htmlFor="custom-appointment-date" className="text-[10px] text-slate-300 font-medium flex items-center gap-1 cursor-pointer">
             <Calendar size={11} className="text-amber-400" />
-            <span>Or pick a future date:</span>
+            <span>{t('scheduler.pickFutureDate')}</span>
           </label>
           <input
             id="custom-appointment-date"
@@ -216,7 +219,7 @@ export const GlassTimeScheduler = ({
               <Clock size={16} />
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300 block">Scheduled Slot</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300 block">{t('scheduler.scheduledSlot')}</span>
               <span className="text-sm font-black text-amber-300 font-mono">
                 {activeDateDisplay} • {String(hour12).padStart(2, '0')}:{String(minute).padStart(2, '0')} {period}
               </span>
@@ -307,9 +310,9 @@ export const GlassTimeScheduler = ({
         <div className="flex items-center justify-between mb-1.5 px-1">
           <span className="text-[10px] font-bold text-slate-200 uppercase tracking-widest flex items-center gap-1">
             <Sparkles size={11} className="text-amber-400" />
-            <span>Recommended Doctor Slots</span>
+            <span>{t('scheduler.recommendedSlots')}</span>
           </span>
-          <span className="text-[10px] text-amber-300/80 font-mono font-medium">Quick 1-Tap</span>
+          <span className="text-[10px] text-amber-300/80 font-mono font-medium">{t('scheduler.quickOneTap')}</span>
         </div>
 
         <div className="grid grid-cols-3 gap-1.5">

@@ -417,49 +417,52 @@ export const PatientDashboard = () => {
       />
 
       {/* Header Dashboard Nav - Locked Firmly Left-to-Right */}
-      <nav className="sticky top-0 z-40 border-b border-white/20 bg-[#162d3a]/70 backdrop-blur-2xl px-3 sm:px-8 py-2.5 sm:py-3.5 flex justify-between items-center gap-2 sm:gap-4 shadow-xl">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <SmartQueueLogo size={36} animated={true} className="shrink-0" />
-          <div className="min-w-0">
-            <h1 className="text-sm sm:text-lg font-black tracking-tight text-white drop-shadow-sm truncate">{t('patient.dashboard')}</h1>
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/35 text-[9px] font-bold text-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>{t('welcome.liveTokens')}</span>
+      {/* Floating Pill Header Navigation (Persistent Pill Shape on Scroll) */}
+      <header className="sticky top-2 sm:top-3.5 z-40 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full pointer-events-none">
+        <nav className="pointer-events-auto rounded-full border border-white/25 bg-[#162d3a]/85 backdrop-blur-2xl px-3.5 sm:px-6 py-2 sm:py-2.5 flex justify-between items-center gap-2 sm:gap-4 shadow-[0_10px_35px_rgba(0,0,0,0.45)] ring-1 ring-white/10">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <SmartQueueLogo size={34} animated={true} className="shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-xs sm:text-base font-black tracking-tight text-white drop-shadow-sm truncate">{t('patient.dashboard')}</h1>
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/35 text-[9px] font-bold text-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>{t('welcome.liveTokens')}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          {/* Language Toggle Button */}
-          <button
-            type="button"
-            onClick={toggleLanguage}
-            className="flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-[11px] sm:text-xs font-bold text-amber-300 transition-all cursor-pointer backdrop-blur-md shadow-sm"
-          >
-            <Languages size={13} />
-            <span>{locale === 'en' ? 'اردو' : 'English'}</span>
-          </button>
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Language Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-[11px] sm:text-xs font-bold text-amber-300 transition-all cursor-pointer backdrop-blur-md shadow-sm"
+            >
+              <Languages size={13} />
+              <span>{locale === 'en' ? 'اردو' : 'English'}</span>
+            </button>
 
-          {/* User Badge */}
-          <div className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 bg-white/10 border border-white/20 rounded-full backdrop-blur-md shadow-sm max-w-[140px] truncate">
-            <User size={13} className="text-amber-400 shrink-0" />
-            <span className="text-[11px] sm:text-xs font-bold text-slate-100 truncate">
-              {currentUser?.name || (currentUser?.email ? currentUser.email.split('@')[0] : 'User')}
-            </span>
+            {/* User Badge */}
+            <div className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 bg-white/10 border border-white/20 rounded-full backdrop-blur-md shadow-sm max-w-[130px] sm:max-w-[160px] truncate">
+              <User size={13} className="text-amber-400 shrink-0" />
+              <span className="text-[11px] sm:text-xs font-bold text-slate-100 truncate">
+                {currentUser?.name || (currentUser?.email ? currentUser.email.split('@')[0] : 'User')}
+              </span>
+            </div>
+
+            {/* Logout Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowSignOutModal(true)}
+              className="flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 bg-rose-500/20 border border-rose-400/35 rounded-full text-[11px] sm:text-xs font-bold text-rose-200 hover:bg-rose-500/30 cursor-pointer transition-all shadow-sm"
+            >
+              <LogOut size={13} />
+              <span className="hidden xs:inline">{t('common.logout')}</span>
+            </motion.button>
           </div>
-
-          {/* Logout Button */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowSignOutModal(true)}
-            className="flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 bg-rose-500/20 border border-rose-400/35 rounded-full text-[11px] sm:text-xs font-bold text-rose-200 hover:bg-rose-500/30 cursor-pointer transition-all shadow-sm"
-          >
-            <LogOut size={13} />
-            <span className="hidden xs:inline">{t('common.logout')}</span>
-          </motion.button>
-        </div>
-      </nav>
+        </nav>
+      </header>
 
       {/* Alert toast notifier */}
       <AnimatePresence>
@@ -557,22 +560,22 @@ export const PatientDashboard = () => {
                   {t('patient.welcome')} <span className="text-amber-400">{currentUser?.name || 'Friend'}!</span>
                 </h2>
                 <p className="text-xs text-slate-200 font-medium mt-1">
-                  Select your healthcare facility to join the live queue, check status, or get WhatsApp alerts.
+                  {t('patient.facilitySubtitle')}
                 </p>
               </div>
               <div className="w-full md:w-80 relative z-30">
                 <label className="block text-[10px] font-bold text-slate-200 uppercase tracking-widest mb-1.5 px-1">
-                  Select Hospital / Clinic
+                  {t('patient.selectFacilityLabel')}
                 </label>
                 <GlassSelect
                   value={selectedClinic}
                   onChange={(val) => setSelectedClinic(val)}
                   icon={Building2}
-                  placeholder="Select Healthcare Center"
+                  placeholder={t('patient.selectFacilityPlaceholder')}
                   options={clinics.map(clinic => ({
                     value: clinic.uid,
                     label: clinic.hospitalName,
-                    badge: 'Verified'
+                    badge: t('patient.verified')
                   }))}
                 />
               </div>
@@ -620,7 +623,7 @@ export const PatientDashboard = () => {
                         
                         <div className="flex items-center gap-1.5 mb-1">
                           <span className={`text-[10px] sm:text-xs font-black tracking-widest uppercase ${activeToken.isEmergency ? 'text-white' : 'text-slate-950/85'}`}>
-                            {activeToken.isEmergency ? '🚨 EMERGENCY PRIORITY TOKEN' : t('patient.activeToken')}
+                            {activeToken.isEmergency ? t('patient.emergencyPriorityBadge') : t('patient.activeToken')}
                           </span>
                         </div>
 
@@ -635,7 +638,7 @@ export const PatientDashboard = () => {
                         <div className={`flex flex-wrap gap-2.5 sm:gap-4 mt-4 sm:mt-6 text-xs border-t pt-3 sm:pt-4 w-full justify-center font-bold ${activeToken.isEmergency ? 'border-white/20 text-white' : 'border-slate-950/20 text-slate-950/85'}`}>
                           <div className="flex items-center gap-1.5">
                             <Ticket size={13} />
-                            <span className="capitalize">{activeToken.type}</span>
+                            <span className="capitalize">{activeToken.type === 'appointment' ? t('patient.appointmentTag') : t('patient.walkinQueueTag')}</span>
                           </div>
                           {activeToken.preferredTime && (
                             <div className="flex items-center gap-1.5">
@@ -653,7 +656,7 @@ export const PatientDashboard = () => {
                           className="mt-3.5 sm:mt-4 flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full bg-slate-950/30 hover:bg-slate-950/45 border border-white/30 text-white text-[10px] sm:text-[11px] font-black cursor-pointer transition-all shadow-md backdrop-blur-md"
                         >
                           <QrCode size={13} />
-                          <span>Show Digital QR Pass</span>
+                          <span>{t('patient.showQrPass')}</span>
                         </motion.button>
                       </motion.div>
 
@@ -667,14 +670,14 @@ export const PatientDashboard = () => {
                         <div className="glass-acrylic-pill p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-row xs:flex-col md:flex-row items-center justify-between xs:justify-center md:justify-between text-left xs:text-center md:text-left gap-2 shadow-lg">
                           <span className="text-[10px] sm:text-xs text-slate-200 font-bold uppercase tracking-wider">{t('patient.yourPosition')}</span>
                           <span className={`text-xl sm:text-2xl font-black font-mono ${position === 0 ? 'text-emerald-400 animate-pulse' : (activeToken.isEmergency ? 'text-rose-300 font-bold text-base' : 'text-white')}`}>
-                            {position === 0 ? 'Serving Now' : (activeToken.isEmergency ? 'Position #1' : position)}
+                            {position === 0 ? t('patient.servingNow') : (activeToken.isEmergency ? t('patient.positionTop') : position)}
                           </span>
                         </div>
 
                         <div className="glass-acrylic-pill p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-row xs:flex-col md:flex-row items-center justify-between xs:justify-center md:justify-between text-left xs:text-center md:text-left gap-2 shadow-lg">
                           <span className="text-[10px] sm:text-xs text-slate-200 font-bold uppercase tracking-wider">{t('patient.estWait')}</span>
                           <span className="text-xl sm:text-2xl font-black font-mono text-amber-300 drop-shadow-sm">
-                            {activeToken.isEmergency ? '0 mins' : (waitTime !== '-' ? `${waitTime} ${t('patient.mins')}` : '-')}
+                            {activeToken.isEmergency ? t('patient.zeroMins') : (waitTime !== '-' ? `${waitTime} ${t('patient.mins')}` : '-')}
                           </span>
                         </div>
                       </div>
@@ -731,19 +734,19 @@ export const PatientDashboard = () => {
                           <MessageCircle size={18} />
                         </div>
                         <div>
-                          <h3 className="text-sm sm:text-base font-black text-white">WhatsApp Live Queue Alerts</h3>
-                          <p className="text-[10px] sm:text-[11px] text-slate-300">Get automatic alerts on your WhatsApp as your turn approaches.</p>
+                          <h3 className="text-sm sm:text-base font-black text-white">{t('patient.waAlertsTitle')}</h3>
+                          <p className="text-[10px] sm:text-[11px] text-slate-300">{t('patient.waAlertsDesc')}</p>
                         </div>
                       </div>
                       <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-[9px] sm:text-[10px] font-bold text-emerald-300">
-                        100% Free Instant
+                        {t('patient.waFreeBadge')}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 items-center relative z-10">
                       <div className="sm:col-span-2">
                         <label className="block text-[10px] font-bold text-slate-200 uppercase tracking-widest mb-1 px-1">
-                          Your WhatsApp Phone Number
+                          {t('patient.waPhoneLabel')}
                         </label>
                         <div className="relative">
                           <Phone size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -751,7 +754,7 @@ export const PatientDashboard = () => {
                             type="tel"
                             value={whatsappPhone}
                             onChange={(e) => setWhatsappPhone(e.target.value)}
-                            placeholder="0300-1234567 or +923001234567"
+                            placeholder={t('patient.waPhonePlaceholder')}
                             className="w-full glass-input rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white font-bold outline-none focus:border-emerald-400 shadow-md transition-all"
                           />
                         </div>
@@ -765,7 +768,7 @@ export const PatientDashboard = () => {
                           className="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 border border-emerald-300/40 cursor-pointer transition-all"
                         >
                           <Send size={13} />
-                          <span>{whatsappSent ? 'Opening WhatsApp...' : 'Send WhatsApp Alert'}</span>
+                          <span>{whatsappSent ? t('patient.waOpening') : t('patient.waSendBtn')}</span>
                         </motion.button>
                       </div>
                     </div>
@@ -784,7 +787,7 @@ export const PatientDashboard = () => {
                   <div className="absolute -top-24 -left-24 w-72 h-72 bg-gradient-to-br from-white/20 via-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
                   <h3 className="text-base sm:text-lg font-black mb-3.5 sm:mb-4 flex items-center gap-2 text-white drop-shadow-sm relative z-10">
                     <Ticket size={19} className="text-amber-400 shrink-0" />
-                    <span>All Departments Status</span>
+                    <span>{t('patient.allDeptsStatus')}</span>
                   </h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 relative z-10">
@@ -799,21 +802,21 @@ export const PatientDashboard = () => {
                             <div>
                               <span className="font-extrabold text-white text-sm">{dept.name}</span>
                               <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-200 font-semibold">
-                                <span>Serving: <strong className="text-amber-400 font-mono font-extrabold">#{servingToken ? servingToken.tokenNumber : '-'}</strong></span>
+                                <span>{t('patient.servingPrefix')} <strong className="text-amber-400 font-mono font-extrabold">#{servingToken ? servingToken.tokenNumber : '-'}</strong></span>
                                 <span className="w-1 h-1 rounded-full bg-slate-400" />
-                                <span>Waiting: <strong className="text-white font-extrabold">{waitingCount}</strong></span>
+                                <span>{t('patient.waitingPrefix')} <strong className="text-white font-extrabold">{waitingCount}</strong></span>
                               </div>
                             </div>
                             <div className="flex flex-col items-end shrink-0 pl-2">
-                              <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">Avg Wait</span>
-                              <span className="text-xs sm:text-sm font-black text-amber-300">{dept.avgTime} mins</span>
+                              <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{t('patient.avgWait')}</span>
+                              <span className="text-xs sm:text-sm font-black text-amber-300">{dept.avgTime} {t('patient.mins')}</span>
                             </div>
                           </div>
                         );
                       })
                     ) : (
                       <span className="text-sm text-slate-300 font-bold italic col-span-2 text-center py-4">
-                        No departments configured for this facility.
+                        {t('patient.noDeptsConfigured')}
                       </span>
                     )}
                   </div>
@@ -835,37 +838,37 @@ export const PatientDashboard = () => {
                     <div>
                       <h3 className="text-base sm:text-lg font-black flex items-center gap-2 text-white drop-shadow-sm">
                         <History size={20} className="text-amber-400 shrink-0" />
-                        <span>Past Visits & Token History</span>
+                        <span>{t('patient.pastVisitsTitle')}</span>
                       </h3>
                       <p className="text-xs text-slate-300 font-medium mt-0.5">
-                        Complete visit & appointment log for <strong className="text-amber-300">{selectedClinicName}</strong>
+                        {t('patient.pastVisitsSub')} <strong className="text-amber-300">{selectedClinicName}</strong>
                       </p>
                     </div>
                     <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-white/10 border border-white/20 text-amber-300">
-                      {clinicHistory.length} Total Records
+                      {clinicHistory.length} {t('patient.totalRecords')}
                     </span>
                   </div>
 
                   {/* Summary Metric Chips */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 relative z-10">
                     <div className="glass-acrylic-pill p-2.5 sm:p-3 rounded-xl flex items-center justify-between">
-                      <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">Total</span>
+                      <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{t('patient.total')}</span>
                       <span className="font-mono font-black text-white text-base">{clinicHistory.length}</span>
                     </div>
                     <div className="glass-acrylic-pill p-2.5 sm:p-3 rounded-xl flex items-center justify-between border-emerald-500/30">
-                      <span className="text-[10px] text-emerald-300 font-bold uppercase tracking-wider">Visited</span>
+                      <span className="text-[10px] text-emerald-300 font-bold uppercase tracking-wider">{t('patient.visited')}</span>
                       <span className="font-mono font-black text-emerald-400 text-base">
                         {clinicHistory.filter(h => h.status === 'completed').length}
                       </span>
                     </div>
                     <div className="glass-acrylic-pill p-2.5 sm:p-3 rounded-xl flex items-center justify-between border-amber-500/30">
-                      <span className="text-[10px] text-amber-300 font-bold uppercase tracking-wider">Rescheduled</span>
+                      <span className="text-[10px] text-amber-300 font-bold uppercase tracking-wider">{t('patient.rescheduled')}</span>
                       <span className="font-mono font-black text-amber-400 text-base">
                         {clinicHistory.filter(h => h.rescheduled || (h.rescheduleCount > 0)).length}
                       </span>
                     </div>
                     <div className="glass-acrylic-pill p-2.5 sm:p-3 rounded-xl flex items-center justify-between border-rose-500/30">
-                      <span className="text-[10px] text-rose-300 font-bold uppercase tracking-wider">Cancelled</span>
+                      <span className="text-[10px] text-rose-300 font-bold uppercase tracking-wider">{t('patient.cancelled')}</span>
                       <span className="font-mono font-black text-rose-400 text-base">
                         {clinicHistory.filter(h => h.status === 'cancelled').length}
                       </span>
@@ -875,10 +878,10 @@ export const PatientDashboard = () => {
                   {/* Filter Pills */}
                   <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 mb-3 relative z-10">
                     {[
-                      { key: 'all', label: 'All Records', count: clinicHistory.length },
-                      { key: 'completed', label: 'Visited / Done', count: clinicHistory.filter(h => h.status === 'completed').length },
-                      { key: 'rescheduled', label: 'Rescheduled', count: clinicHistory.filter(h => h.rescheduled || (h.rescheduleCount > 0)).length },
-                      { key: 'cancelled', label: 'Cancelled', count: clinicHistory.filter(h => h.status === 'cancelled').length },
+                      { key: 'all', label: t('patient.filterAll'), count: clinicHistory.length },
+                      { key: 'completed', label: t('patient.filterVisited'), count: clinicHistory.filter(h => h.status === 'completed').length },
+                      { key: 'rescheduled', label: t('patient.filterRescheduled'), count: clinicHistory.filter(h => h.rescheduled || (h.rescheduleCount > 0)).length },
+                      { key: 'cancelled', label: t('patient.filterCancelled'), count: clinicHistory.filter(h => h.status === 'cancelled').length },
                     ].map(tab => (
                       <button
                         key={tab.key}
@@ -914,7 +917,7 @@ export const PatientDashboard = () => {
                       if (filtered.length === 0) {
                         return (
                           <div className="text-center py-8 text-slate-300 font-medium text-xs border border-dashed border-white/20 rounded-2xl bg-white/[0.03]">
-                            No {historyFilter !== 'all' ? historyFilter : ''} visit records found for {selectedClinicName}.
+                            {t('patient.noRecordsFound')} {selectedClinicName}.
                           </div>
                         );
                       }
@@ -956,7 +959,7 @@ export const PatientDashboard = () => {
                                     {item.deptName}
                                   </span>
                                   <span className="text-[10px] text-slate-300 font-medium">
-                                    {item.type === 'appointment' ? 'Scheduled Appointment' : 'Walk-In Queue'}
+                                    {item.type === 'appointment' ? t('patient.appointmentTag') : t('patient.walkinQueueTag')}
                                   </span>
                                 </div>
                               </div>
@@ -966,31 +969,31 @@ export const PatientDashboard = () => {
                                 {isCompleted && (
                                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-black">
                                     <CheckCircle size={12} className="text-emerald-400" />
-                                    <span>Visited • Consultation Completed</span>
+                                    <span>{t('patient.statusCompleted')}</span>
                                   </span>
                                 )}
                                 {isCancelled && (
                                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 text-[10px] font-black">
                                     <XCircle size={12} className="text-rose-400" />
-                                    <span>Cancelled by Patient</span>
+                                    <span>{t('patient.statusCancelled')}</span>
                                   </span>
                                 )}
                                 {isRescheduled && !isCompleted && !isCancelled && (
                                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-black">
                                     <RotateCcw size={12} className="text-amber-400" />
-                                    <span>Rescheduled Slot</span>
+                                    <span>{t('patient.statusRescheduled')}</span>
                                   </span>
                                 )}
                                 {isSkipped && (
                                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-300 text-[10px] font-black">
                                     <AlertOctagon size={12} className="text-purple-400" />
-                                    <span>Missed / No-Show</span>
+                                    <span>{t('patient.statusSkipped')}</span>
                                   </span>
                                 )}
                                 {isWaiting && (
                                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/20 border border-sky-400/40 text-sky-300 text-[10px] font-black">
                                     <Clock size={12} className="text-sky-400" />
-                                    <span>Active in Queue</span>
+                                    <span>{t('patient.statusWaiting')}</span>
                                   </span>
                                 )}
                               </div>
@@ -1001,7 +1004,7 @@ export const PatientDashboard = () => {
                               <div className="flex flex-wrap items-center gap-3">
                                 <span className="flex items-center gap-1 font-medium text-slate-200">
                                   <CalendarDays size={12} className="text-amber-400" />
-                                  {item.preferredDate || new Date(item.timestamp).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                                  {item.preferredDate || new Date(item.timestamp).toLocaleDateString(locale === 'ur' ? 'ur-PK' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                                 </span>
                                 {item.preferredTime && (
                                   <span className="flex items-center gap-1 font-mono font-bold text-amber-300">
@@ -1011,7 +1014,7 @@ export const PatientDashboard = () => {
                                 )}
                                 {item.isEmergency && (
                                   <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-black text-[10px]">
-                                    🚨 Emergency Priority
+                                    {t('patient.emergencyPriorityTag')}
                                   </span>
                                 )}
                               </div>
@@ -1019,14 +1022,14 @@ export const PatientDashboard = () => {
                               {/* Rescheduled info */}
                               {isRescheduled && (
                                 <div className="text-[10px] text-amber-200/90 font-medium">
-                                  Original: <span className="line-through text-slate-400">{item.originalSlot || 'Initial Slot'}</span> ➔ New: <span className="font-bold text-amber-300">{item.preferredDate ? item.preferredDate + ' ' : ''}{item.preferredTime}</span>
+                                  {t('patient.originalLabel')} <span className="line-through text-slate-400">{item.originalSlot || t('patient.initialSlotLabel')}</span> ➔ {t('patient.newLabel')} <span className="font-bold text-amber-300">{item.preferredDate ? item.preferredDate + ' ' : ''}{item.preferredTime}</span>
                                 </div>
                               )}
 
                               {/* Cancelled info */}
                               {isCancelled && item.cancellationReason && (
                                 <div className="text-[10px] text-rose-300/90 font-medium">
-                                  Note: {item.cancellationReason}
+                                  {t('patient.noteLabel')} {item.cancellationReason}
                                 </div>
                               )}
 
@@ -1073,7 +1076,7 @@ export const PatientDashboard = () => {
                         value={selectedDept}
                         onChange={(val) => setSelectedDept(val)}
                         icon={Stethoscope}
-                        placeholder="Choose Department"
+                        placeholder={t('patient.chooseDeptPlaceholder')}
                         options={departments.map(d => ({
                           value: d.name,
                           label: d.name,
@@ -1084,7 +1087,7 @@ export const PatientDashboard = () => {
 
                     <div>
                       <label className="block text-[10px] font-bold text-slate-200 uppercase tracking-widest mb-1.5 px-1">
-                        Booking Mode
+                        {t('patient.bookingMode')}
                       </label>
                       <div className="grid grid-cols-2 gap-2 p-1.5 bg-black/30 border border-white/20 rounded-2xl backdrop-blur-xl shadow-inner relative">
                         <button
@@ -1101,7 +1104,7 @@ export const PatientDashboard = () => {
                             <span className="text-xs font-black">{t('patient.walkIn')}</span>
                           </div>
                           <span className={`text-[9px] font-bold tracking-tight mt-0.5 ${bookingType === 'walk-in' ? 'text-slate-900/90 font-mono' : 'text-slate-400'}`}>
-                            Instant Queue
+                            {t('patient.instantQueue')}
                           </span>
                         </button>
 
@@ -1122,7 +1125,7 @@ export const PatientDashboard = () => {
                             <span className="text-xs font-black">{t('patient.appointment')}</span>
                           </div>
                           <span className={`text-[9px] font-bold tracking-tight mt-0.5 ${bookingType === 'appointment' ? 'text-slate-900/90 font-mono' : 'text-slate-400'}`}>
-                            Doctor Slot
+                            {t('patient.doctorSlot')}
                           </span>
                         </button>
                       </div>
@@ -1163,9 +1166,9 @@ export const PatientDashboard = () => {
                         <div className="flex-1 min-w-0">
                           <span className="text-xs font-black text-rose-300 flex items-center gap-1.5">
                             <AlertTriangle size={13} className="text-rose-400 shrink-0" />
-                            <span className="truncate">Urgent / Critical Triage Bypass</span>
+                            <span className="truncate">{t('patient.emergencyBypass')}</span>
                           </span>
-                          <p className="text-[10px] text-slate-300 font-medium leading-tight mt-0.5">For chest pain, acute distress, or elderly emergency.</p>
+                          <p className="text-[10px] text-slate-300 font-medium leading-tight mt-0.5">{t('patient.emergencyBypassDesc')}</p>
                         </div>
                       </label>
                     </div>
@@ -1181,7 +1184,7 @@ export const PatientDashboard = () => {
                           : 'bg-gradient-to-r from-[#e57342] via-[#ff9655] to-[#e57342] text-slate-950 shadow-orange-950/40'
                       } hover:brightness-110 font-black rounded-2xl text-xs uppercase tracking-wider border border-amber-300/40 shadow-xl transition-all cursor-pointer mt-4`}
                     >
-                      {isEmergency ? '🚨 Confirm Emergency Token' : t('patient.confirmBooking')}
+                      {isEmergency ? t('patient.confirmEmergency') : t('patient.confirmBooking')}
                     </motion.button>
                   </form>
                 </motion.div>
@@ -1292,6 +1295,24 @@ export const PatientDashboard = () => {
         )}
       </main>
 
+      {/* Floating Pill-Shaped Footer */}
+      <footer className="mt-12 sm:mt-16 px-4 flex justify-center relative z-20 pb-6">
+        <div className="glass-acrylic-pill px-6 sm:px-8 py-3.5 rounded-full border border-white/20 bg-[#162d3a]/75 backdrop-blur-2xl shadow-xl flex flex-wrap items-center justify-between gap-4 max-w-4xl w-full text-xs text-slate-300">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-bold text-white tracking-wide">{t('footer.brand')}</span>
+            <span className="text-white/30 hidden sm:inline">•</span>
+            <span className="text-[11px] text-slate-300 hidden sm:inline">{t('footer.liveSync')}</span>
+          </div>
+          <div className="flex items-center gap-4 text-[11px] text-slate-400">
+            <span className="glass-acrylic-pill px-2.5 py-1 rounded-full text-[10px] text-amber-300 border border-amber-300/30 font-mono">
+              {t('footer.encryptedBadge')}
+            </span>
+            <span>© {new Date().getFullYear()} {t('footer.allRights')}</span>
+          </div>
+        </div>
+      </footer>
+
       {/* Digital QR Code Token Pass Modal */}
       <AnimatePresence>
         {qrModalOpen && activeToken && (
@@ -1306,7 +1327,7 @@ export const PatientDashboard = () => {
               <div className="flex justify-between items-center pb-3 border-b border-white/15 mb-3 sm:mb-4 relative z-10">
                 <div className="flex items-center gap-2">
                   <QrCode size={18} className="text-amber-400" />
-                  <span className="text-sm font-black text-white">Digital Token Pass</span>
+                  <span className="text-sm font-black text-white">{t('patient.qrModalTitle')}</span>
                 </div>
                 <button
                   type="button"
@@ -1322,18 +1343,18 @@ export const PatientDashboard = () => {
                 {qrDataUrl ? (
                   <img src={qrDataUrl} alt="Token QR Code" className="w-44 h-44 sm:w-52 sm:h-52 object-contain" />
                 ) : (
-                  <div className="w-44 h-44 sm:w-52 sm:h-52 flex items-center justify-center text-xs text-slate-400 font-bold">Generating QR...</div>
+                  <div className="w-44 h-44 sm:w-52 sm:h-52 flex items-center justify-center text-xs text-slate-400 font-bold">{t('patient.generatingQr')}</div>
                 )}
               </div>
 
               <div className="mt-2 sm:mt-3 space-y-0.5 sm:space-y-1 relative z-10">
                 <span className="text-xl sm:text-2xl font-black font-mono text-amber-400 block">Token #{activeToken.tokenNumber}</span>
                 <span className="text-xs font-bold text-white block">{activeToken.deptName} • {selectedClinicName}</span>
-                <span className="text-[11px] text-slate-300 block">Patient: {currentUser?.name || 'Friend'}</span>
+                <span className="text-[11px] text-slate-300 block">{t('patient.qrPatientLabel')} {currentUser?.name || 'Friend'}</span>
               </div>
 
               <p className="text-[10px] text-slate-400 mt-3 sm:mt-4 leading-relaxed font-medium relative z-10">
-                Show this QR code at the doctor's desk or triage reception for immediate fast-track check-in.
+                {t('patient.qrModalHint')}
               </p>
             </motion.div>
           </div>
@@ -1354,7 +1375,7 @@ export const PatientDashboard = () => {
               <div className="flex justify-between items-center pb-3 border-b border-white/15 mb-3 sm:mb-4 relative z-10">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <Calendar size={16} className="text-amber-400" />
-                  <span>Reschedule Token</span>
+                  <span>{t('patient.rescheduleModalTitle')}</span>
                 </h3>
                 <button
                   onClick={() => setRescheduleModalOpen(false)}
@@ -1367,7 +1388,7 @@ export const PatientDashboard = () => {
               <form onSubmit={handleReschedule} className="space-y-4 relative z-10">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-200 uppercase tracking-widest mb-1.5 px-1">
-                    Choose New Day & Time Slot
+                    {t('patient.chooseNewSlotLabel')}
                   </label>
                   <GlassTimeScheduler
                     selectedDate={newPrefDate}
@@ -1383,13 +1404,13 @@ export const PatientDashboard = () => {
                     onClick={() => setRescheduleModalOpen(false)}
                     className="flex-1 py-2.5 bg-white/15 hover:bg-white/20 text-slate-200 font-bold rounded-xl text-xs cursor-pointer border border-white/20 transition-all shadow-sm"
                   >
-                    Cancel
+                    {t('patient.cancelBtn')}
                   </button>
                   <button
                     type="submit"
                     className="flex-1 py-2.5 bg-gradient-to-r from-[#e57342] to-[#ff9655] text-slate-950 font-black rounded-xl text-xs cursor-pointer shadow-lg hover:brightness-110 transition-all border border-amber-300/40"
                   >
-                    Save Changes
+                    {t('patient.saveChanges')}
                   </button>
                 </div>
               </form>
@@ -1415,11 +1436,11 @@ export const PatientDashboard = () => {
               </div>
 
               <h3 className="text-base sm:text-lg font-black text-white drop-shadow-sm mb-1">
-                Cancel Token #{activeToken.tokenNumber}?
+                {t('patient.cancelConfirmTitle')} #{activeToken.tokenNumber}?
               </h3>
               
               <p className="text-xs text-slate-300 font-medium leading-relaxed mb-4 px-1">
-                Are you sure you want to cancel your queue position at <strong className="text-amber-300">{selectedClinicName}</strong> ({activeToken.deptName})? This will be recorded in your past clinic history.
+                {t('patient.cancelConfirmDesc')}
               </p>
 
               <div className="flex gap-2.5 sm:gap-3">
@@ -1428,14 +1449,14 @@ export const PatientDashboard = () => {
                   onClick={() => setCancelModalOpen(false)}
                   className="flex-1 py-2.5 bg-white/15 hover:bg-white/20 text-slate-200 font-bold rounded-xl text-xs cursor-pointer border border-white/20 transition-all shadow-sm"
                 >
-                  Keep Token
+                  {t('patient.keepToken')}
                 </button>
                 <button
                   type="button"
                   onClick={handleCancelToken}
                   className="flex-1 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-black rounded-xl text-xs cursor-pointer shadow-lg shadow-rose-950/50 transition-all border border-rose-400/40"
                 >
-                  Yes, Cancel
+                  {t('patient.confirmCancelBtn')}
                 </button>
               </div>
             </motion.div>

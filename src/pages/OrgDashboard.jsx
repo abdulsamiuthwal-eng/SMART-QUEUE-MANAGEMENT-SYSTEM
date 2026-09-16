@@ -350,101 +350,103 @@ export const OrgDashboard = () => {
         }}
       />
 
-      {/* Nav Header - Locked strictly LTR */}
-      <nav className="sticky top-0 z-40 border-b border-white/20 bg-[#162d3a]/70 backdrop-blur-2xl px-3 sm:px-8 py-2.5 sm:py-3.5 flex flex-col sm:flex-row justify-between items-center gap-2.5 sm:gap-4 shadow-xl">
-        <div className="w-full sm:w-auto flex justify-between sm:justify-start items-center gap-2 sm:gap-3">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <SmartQueueLogo size={36} animated={true} className="shrink-0" />
-            <div className="min-w-0">
-              <h1 className="text-sm sm:text-lg font-black tracking-tight text-white drop-shadow-sm truncate">{t('org.dashboard')}</h1>
-              <p className="text-[9px] sm:text-[10px] text-amber-300 uppercase tracking-wider font-extrabold truncate max-w-[160px] sm:max-w-none">{t('org.welcome')} {currentUser?.hospitalName}</p>
+      {/* Floating Pill-Shaped Nav Header */}
+      <div className="sticky top-2 sm:top-3.5 z-40 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full pointer-events-none transition-all duration-300">
+        <nav className="pointer-events-auto rounded-full border border-white/25 bg-[#162d3a]/85 backdrop-blur-2xl px-3.5 sm:px-6 py-2 sm:py-2.5 flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-4 shadow-[0_12px_40px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
+          <div className="w-full sm:w-auto flex justify-between sm:justify-start items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <SmartQueueLogo size={36} animated={true} className="shrink-0" />
+              <div className="min-w-0">
+                <h1 className="text-sm sm:text-lg font-black tracking-tight text-white drop-shadow-sm truncate">{t('org.dashboard')}</h1>
+                <p className="text-[9px] sm:text-[10px] text-amber-300 uppercase tracking-wider font-extrabold truncate max-w-[160px] sm:max-w-none">{t('org.welcome')} {currentUser?.hospitalName}</p>
+              </div>
+            </div>
+
+            {/* Quick Actions for Mobile Top-Right */}
+            <div className="flex sm:hidden items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={toggleLanguage}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white/15 border border-white/25 text-[11px] font-bold text-amber-300 backdrop-blur-md cursor-pointer shadow-sm"
+              >
+                <Languages size={13} />
+                <span>{locale === 'en' ? 'اردو' : 'EN'}</span>
+              </button>
+              <button
+                onClick={() => setShowSignOutModal(true)}
+                className="flex items-center gap-1 px-2.5 py-1.5 bg-rose-500/20 border border-rose-400/35 rounded-full text-[11px] font-bold text-rose-200 cursor-pointer shadow-sm"
+              >
+                <LogOut size={13} />
+              </button>
             </div>
           </div>
 
-          {/* Quick Actions for Mobile Top-Right */}
-          <div className="flex sm:hidden items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={toggleLanguage}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white/15 border border-white/25 text-[11px] font-bold text-amber-300 backdrop-blur-md cursor-pointer shadow-sm"
-            >
-              <Languages size={13} />
-              <span>{locale === 'en' ? 'اردو' : 'EN'}</span>
-            </button>
-            <button
-              onClick={() => setShowSignOutModal(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-rose-500/20 border border-rose-400/35 rounded-full text-[11px] font-bold text-rose-200 cursor-pointer shadow-sm"
-            >
-              <LogOut size={13} />
-            </button>
-          </div>
-        </div>
+          {/* Dashboard Nav links, language toggle, & logout */}
+          <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
+            <div className="w-full sm:w-auto flex items-center gap-1 bg-white/10 border border-white/20 p-1 rounded-full text-xs shadow-inner backdrop-blur-md overflow-x-auto no-scrollbar">
+              <button
+                onClick={() => setActiveTab('queue')}
+                className={`px-3 sm:px-4 py-1.5 rounded-full font-bold cursor-pointer transition-all whitespace-nowrap text-[11px] sm:text-xs shrink-0 ${
+                  activeTab === 'queue' ? 'bg-gradient-to-r from-[#e57342] to-[#f97316] text-slate-950 font-black shadow-md' : 'text-slate-200 hover:text-white'
+                }`}
+              >
+                {t('org.tabQueue')}
+              </button>
+              <button
+                onClick={() => setActiveTab('departments')}
+                className={`px-3 sm:px-4 py-1.5 rounded-full font-bold cursor-pointer transition-all whitespace-nowrap text-[11px] sm:text-xs shrink-0 ${
+                  activeTab === 'departments' ? 'bg-gradient-to-r from-[#e57342] to-[#f97316] text-slate-950 font-black shadow-md' : 'text-slate-200 hover:text-white'
+                }`}
+              >
+                {t('org.tabDepartments')}
+              </button>
+              <button
+                onClick={() => setActiveTab('supplies')}
+                className={`px-3 sm:px-4 py-1.5 rounded-full font-bold cursor-pointer transition-all whitespace-nowrap text-[11px] sm:text-xs shrink-0 flex items-center gap-1.5 ${
+                  activeTab === 'supplies' ? 'bg-gradient-to-r from-[#e57342] to-[#f97316] text-slate-950 font-black shadow-md' : 'text-slate-200 hover:text-white'
+                }`}
+              >
+                <span>{t('org.tabSupplies')}</span>
+                {lowStockItems.length > 0 && (
+                  <span className="w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center animate-bounce">
+                    {lowStockItems.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('reports')}
+                className={`px-3 sm:px-4 py-1.5 rounded-full font-bold cursor-pointer transition-all whitespace-nowrap text-[11px] sm:text-xs shrink-0 ${
+                  activeTab === 'reports' ? 'bg-gradient-to-r from-[#e57342] to-[#f97316] text-slate-950 font-black shadow-md' : 'text-slate-200 hover:text-white'
+                }`}
+              >
+                {t('org.tabReports')}
+              </button>
+            </div>
 
-        {/* Dashboard Nav links, language toggle, & logout */}
-        <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
-          <div className="w-full sm:w-auto flex items-center gap-1 bg-white/10 border border-white/20 p-1 rounded-full text-xs shadow-inner backdrop-blur-md overflow-x-auto no-scrollbar">
-            <button
-              onClick={() => setActiveTab('queue')}
-              className={`px-3 sm:px-4 py-1.5 rounded-full font-bold cursor-pointer transition-all whitespace-nowrap text-[11px] sm:text-xs shrink-0 ${
-                activeTab === 'queue' ? 'bg-gradient-to-r from-[#e57342] to-[#f97316] text-slate-950 font-black shadow-md' : 'text-slate-200 hover:text-white'
-              }`}
-            >
-              Live Queue
-            </button>
-            <button
-              onClick={() => setActiveTab('departments')}
-              className={`px-3 sm:px-4 py-1.5 rounded-full font-bold cursor-pointer transition-all whitespace-nowrap text-[11px] sm:text-xs shrink-0 ${
-                activeTab === 'departments' ? 'bg-gradient-to-r from-[#e57342] to-[#f97316] text-slate-950 font-black shadow-md' : 'text-slate-200 hover:text-white'
-              }`}
-            >
-              Departments
-            </button>
-            <button
-              onClick={() => setActiveTab('supplies')}
-              className={`px-3 sm:px-4 py-1.5 rounded-full font-bold cursor-pointer transition-all whitespace-nowrap text-[11px] sm:text-xs shrink-0 flex items-center gap-1.5 ${
-                activeTab === 'supplies' ? 'bg-gradient-to-r from-[#e57342] to-[#f97316] text-slate-950 font-black shadow-md' : 'text-slate-200 hover:text-white'
-              }`}
-            >
-              <span>Supplies</span>
-              {lowStockItems.length > 0 && (
-                <span className="w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center animate-bounce">
-                  {lowStockItems.length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('reports')}
-              className={`px-3 sm:px-4 py-1.5 rounded-full font-bold cursor-pointer transition-all whitespace-nowrap text-[11px] sm:text-xs shrink-0 ${
-                activeTab === 'reports' ? 'bg-gradient-to-r from-[#e57342] to-[#f97316] text-slate-950 font-black shadow-md' : 'text-slate-200 hover:text-white'
-              }`}
-            >
-              Reports & AI
-            </button>
-          </div>
+            {/* Language & Logout for Desktop */}
+            <div className="hidden sm:flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={toggleLanguage}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-xs font-bold text-amber-300 transition-all cursor-pointer backdrop-blur-md shadow-sm"
+              >
+                <Languages size={14} />
+                <span>{locale === 'en' ? 'اردو' : 'English'}</span>
+              </button>
 
-          {/* Language & Logout for Desktop */}
-          <div className="hidden sm:flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={toggleLanguage}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-xs font-bold text-amber-300 transition-all cursor-pointer backdrop-blur-md shadow-sm"
-            >
-              <Languages size={14} />
-              <span>{locale === 'en' ? 'اردو' : 'English'}</span>
-            </button>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowSignOutModal(true)}
-              className="flex items-center gap-1.5 px-4 py-1.5 bg-rose-500/20 border border-rose-400/35 rounded-full text-xs font-extrabold text-rose-200 hover:bg-rose-500/30 cursor-pointer transition-all shadow-sm"
-            >
-              <LogOut size={13} />
-              <span>{t('common.logout')}</span>
-            </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowSignOutModal(true)}
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-rose-500/20 border border-rose-400/35 rounded-full text-xs font-extrabold text-rose-200 hover:bg-rose-500/30 cursor-pointer transition-all shadow-sm"
+              >
+                <LogOut size={13} />
+                <span>{t('common.logout')}</span>
+              </motion.button>
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </div>
 
       {/* Alert toast notification */}
       <AnimatePresence>
@@ -480,7 +482,7 @@ export const OrgDashboard = () => {
               </div>
               <div>
                 <h4 className="text-xs font-black text-rose-200">
-                  Critical Supply Alert: {lowStockItems.length} medical item(s) below safety threshold!
+                  {t('org.criticalSupplyAlert')}: {lowStockItems.length} {t('org.belowThreshold')}
                 </h4>
                 <p className="text-[11px] text-slate-300">
                   {lowStockItems.map(i => `${i.name} (${i.quantity} ${i.unit} left)`).join(' • ')}
@@ -492,14 +494,14 @@ export const OrgDashboard = () => {
                 onClick={() => setActiveTab('supplies')}
                 className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-xs font-bold text-slate-200 cursor-pointer transition-all"
               >
-                View Inventory
+                {t('org.viewInventory')}
               </button>
               <button
                 onClick={() => handleOrderSupplyWhatsApp(lowStockItems[0])}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs cursor-pointer shadow-md transition-all"
               >
                 <MessageCircle size={13} />
-                <span>WhatsApp Restock Alert</span>
+                <span>{t('org.waRestockAlert')}</span>
               </button>
             </div>
           </motion.div>
@@ -570,7 +572,7 @@ export const OrgDashboard = () => {
                           <Clock size={19} className="text-amber-400 shrink-0" />
                           <span>{t('org.liveQueueMgmt')}</span>
                         </h3>
-                        <p className="text-xs text-slate-200 font-medium mt-0.5">Advance patient queue or skip absentees.</p>
+                        <p className="text-xs text-slate-200 font-medium mt-0.5">{t('org.advanceQueueHelp')}</p>
                       </div>
                       
                       {/* Department Picker & QR Scanner Button */}
@@ -591,7 +593,7 @@ export const OrgDashboard = () => {
                           className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-amber-400/20 hover:bg-amber-400/30 border border-amber-300/40 text-amber-200 text-xs font-bold cursor-pointer transition-all shadow-md shrink-0"
                         >
                           <QrCode size={14} />
-                          <span>Scan QR</span>
+                          <span>{t('org.scanQrBtn')}</span>
                         </button>
                       </div>
                     </div>
@@ -609,7 +611,7 @@ export const OrgDashboard = () => {
                           <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl pointer-events-none" />
                           
                           <span className={`text-[10px] sm:text-xs font-black tracking-widest uppercase mb-1 ${servingPatient?.isEmergency ? 'text-white' : 'text-slate-950/85'}`}>
-                            {servingPatient?.isEmergency ? '🚨 EMERGENCY SERVING' : t('patient.servingToken')}
+                            {servingPatient?.isEmergency ? t('org.emergencyServingBadge') : t('patient.servingToken')}
                           </span>
                           
                           {servingPatient ? (
@@ -627,7 +629,7 @@ export const OrgDashboard = () => {
                           ) : (
                             <div className="flex flex-col items-center py-4 text-slate-950/70">
                               <RotateCcw size={32} className="text-slate-950/60 mb-2 animate-spin-slow" />
-                              <span className="text-xs font-black">No patient in service</span>
+                              <span className="text-xs font-black">{t('org.noPatientServing')}</span>
                             </div>
                           )}
                         </div>
@@ -657,15 +659,15 @@ export const OrgDashboard = () => {
                           
                           <div className="flex justify-around text-center pt-3 border-t border-white/15 mt-1 text-xs font-semibold">
                             <div className="glass-acrylic-pill px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl flex-1 mx-1 text-center">
-                              <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-300">Waiting</span>
+                              <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-300">{t('org.waitingCountLabel')}</span>
                               <span className="text-sm sm:text-base font-black text-white mt-0.5 block">{waitingPatients.length}</span>
                             </div>
                             <div className="glass-acrylic-pill px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl flex-1 mx-1 text-center">
-                              <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-300">Served</span>
+                              <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-300">{t('org.servedCountLabel')}</span>
                               <span className="text-sm sm:text-base font-black text-amber-400 mt-0.5 block">{completedCount}</span>
                             </div>
                             <div className="glass-acrylic-pill px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl flex-1 mx-1 text-center">
-                              <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-300">Skipped</span>
+                              <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-300">{t('org.skippedCountLabel')}</span>
                               <span className="text-sm sm:text-base font-black text-rose-400 mt-0.5 block">{skippedCount}</span>
                             </div>
                           </div>
@@ -675,7 +677,7 @@ export const OrgDashboard = () => {
                     ) : (
                       <div className="flex flex-col items-center justify-center py-10 sm:py-12 text-slate-300 border border-dashed border-white/20 rounded-2xl relative z-10">
                         <Settings size={36} className="mb-2 text-amber-400/80" />
-                        <span className="font-bold text-xs sm:text-sm">Please add a department first.</span>
+                        <span className="font-bold text-xs sm:text-sm">{t('org.pleaseAddDept')}</span>
                       </div>
                     )}
                   </motion.div>
@@ -693,18 +695,18 @@ export const OrgDashboard = () => {
                       <div className="absolute -top-24 -left-24 w-72 h-72 bg-gradient-to-br from-white/20 via-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
                       <h3 className="text-sm sm:text-base font-black mb-3.5 sm:mb-4 text-white drop-shadow-sm relative z-10 flex items-center gap-2">
                         <UserCheck size={18} className="text-amber-400 shrink-0" />
-                        <span>Patients Waiting List ({waitingPatients.length})</span>
+                        <span>{t('org.patientsWaitingList')} ({waitingPatients.length})</span>
                       </h3>
                       
                       <div className="overflow-x-auto relative z-10 no-scrollbar">
                         <table className="w-full min-w-[560px] text-left text-xs border-collapse">
                           <thead>
                             <tr className="border-b border-white/15 text-slate-300">
-                              <th className="py-2.5 font-bold uppercase tracking-wider">No.</th>
-                              <th className="py-2.5 font-bold uppercase tracking-wider">Patient</th>
-                              <th className="py-2.5 font-bold uppercase tracking-wider">Contact</th>
-                              <th className="py-2.5 font-bold uppercase tracking-wider">Mode</th>
-                              <th className="py-2.5 font-bold uppercase tracking-wider">Check-in</th>
+                              <th className="py-2.5 font-bold uppercase tracking-wider">{t('org.colNo')}</th>
+                              <th className="py-2.5 font-bold uppercase tracking-wider">{t('org.colPatient')}</th>
+                              <th className="py-2.5 font-bold uppercase tracking-wider">{t('org.colContact')}</th>
+                              <th className="py-2.5 font-bold uppercase tracking-wider">{t('org.colMode')}</th>
+                              <th className="py-2.5 font-bold uppercase tracking-wider">{t('org.colCheckIn')}</th>
                               <th className="py-2.5 font-bold uppercase tracking-wider">{t('org.status')}</th>
                             </tr>
                           </thead>
@@ -722,7 +724,7 @@ export const OrgDashboard = () => {
                                   {patient.isEmergency ? (
                                     <span className="inline-flex items-center gap-1 text-rose-300 font-black">
                                       <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
-                                      #{patient.tokenNumber} (🚨 Urgent)
+                                      #{patient.tokenNumber} ({t('org.urgentBadge')})
                                     </span>
                                   ) : (
                                     <span className="text-amber-400">#{patient.tokenNumber}</span>
@@ -736,7 +738,7 @@ export const OrgDashboard = () => {
                                       ? 'bg-rose-500/25 border-rose-400/40 text-rose-200'
                                       : (patient.type === 'appointment' ? 'bg-amber-500/20 border-amber-400/30 text-amber-300' : 'bg-white/10 border-white/15 text-slate-200')
                                   }`}>
-                                    {patient.isEmergency ? 'Emergency Bypass' : (patient.type === 'appointment' ? `${patient.preferredTime}` : 'Walk-in')}
+                                    {patient.isEmergency ? t('org.emergencyBypassTag') : (patient.type === 'appointment' ? `${patient.preferredTime}` : t('patient.walkIn'))}
                                   </span>
                                 </td>
                                 <td className="py-3 text-slate-300 font-mono font-medium">
@@ -745,14 +747,14 @@ export const OrgDashboard = () => {
                                 <td className="py-3">
                                   <span className={`flex items-center gap-1.5 font-bold ${patient.isEmergency ? 'text-rose-300' : 'text-emerald-300'}`}>
                                     <span className={`w-1.5 h-1.5 rounded-full ${patient.isEmergency ? 'bg-rose-400' : 'bg-emerald-400'} animate-ping`} />
-                                    <span>{patient.isEmergency ? 'Priority Top' : t('org.waiting')}</span>
+                                    <span>{patient.isEmergency ? t('org.priorityTopBadge') : t('org.waiting')}</span>
                                   </span>
                                 </td>
                               </tr>
                             ))}
                             {waitingPatients.length === 0 && (
                               <tr>
-                                <td colSpan={6} className="text-center py-6 text-slate-300 italic font-bold">No patients waiting.</td>
+                                <td colSpan={6} className="text-center py-6 text-slate-300 italic font-bold">{t('org.noPatientsWaiting')}</td>
                               </tr>
                             )}
                           </tbody>
@@ -798,7 +800,7 @@ export const OrgDashboard = () => {
 
                       <div>
                         <label className="block text-[10px] font-bold text-slate-200 uppercase tracking-widest mb-1.5 px-1">
-                          {t('org.phone')} (Optional)
+                          {t('org.phone')} ({locale === 'ur' ? 'اختیاری' : 'Optional'})
                         </label>
                         <input
                           type="tel"
@@ -840,9 +842,9 @@ export const OrgDashboard = () => {
                           <div className="flex-1 min-w-0">
                             <span className="text-xs font-black text-rose-300 flex items-center gap-1.5">
                               <ShieldAlert size={14} className="text-rose-400 shrink-0" />
-                              <span className="truncate">Emergency Priority Bypass</span>
+                              <span className="truncate">{t('org.emergencyBypassLabel')}</span>
                             </span>
-                            <p className="text-[10px] text-slate-300 font-medium leading-tight mt-0.5">Patient jumps to #1 waiting position immediately.</p>
+                            <p className="text-[10px] text-slate-300 font-medium leading-tight mt-0.5">{t('org.emergencyBypassHelp')}</p>
                           </div>
                         </label>
                       </div>
@@ -858,7 +860,7 @@ export const OrgDashboard = () => {
                             : 'bg-gradient-to-r from-[#e57342] via-[#ff9655] to-[#e57342] text-slate-950 shadow-orange-950/40'
                         } hover:brightness-110 font-black rounded-2xl text-xs uppercase tracking-wider border border-amber-300/40 shadow-xl transition-all cursor-pointer mt-4`}
                       >
-                        {isEmergencyManual ? '🚨 Issue Emergency Token' : t('org.generateToken')}
+                        {isEmergencyManual ? t('org.issueEmergencyBtn') : t('org.generateToken')}
                       </motion.button>
                     </form>
                   </motion.div>
@@ -904,14 +906,14 @@ export const OrgDashboard = () => {
                             </div>
 
                             <div className="flex justify-between text-[10px] text-slate-300 font-bold">
-                              <span>{waiting} patients waiting</span>
-                              <span>Est. wait: {waiting * dept.avgTime}m</span>
+                              <span>{waiting} {t('org.patientsWaiting')}</span>
+                              <span>{t('org.estWaitPrefix')} {waiting * dept.avgTime}m</span>
                             </div>
                           </div>
                         );
                       })}
                       {departments.length === 0 && (
-                        <span className="text-xs text-slate-300 font-bold italic block text-center py-3">No departments active.</span>
+                        <span className="text-xs text-slate-300 font-bold italic block text-center py-3">{t('org.noDeptsActive')}</span>
                       )}
                     </div>
                   </motion.div>
@@ -978,7 +980,7 @@ export const OrgDashboard = () => {
                       className="w-full py-3 bg-gradient-to-r from-[#e57342] via-[#ff9655] to-[#e57342] hover:brightness-110 text-slate-950 font-black rounded-2xl text-xs uppercase tracking-wider border border-amber-300/40 shadow-xl shadow-orange-950/40 transition-all cursor-pointer flex items-center justify-center gap-2 mt-4"
                     >
                       <Plus size={14} />
-                      <span>Add Department</span>
+                      <span>{t('org.addDeptBtn')}</span>
                     </motion.button>
                   </form>
                 </motion.div>
@@ -995,7 +997,7 @@ export const OrgDashboard = () => {
                   <div className="absolute -top-24 -right-24 w-72 h-72 bg-gradient-to-bl from-white/20 via-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
                   <h3 className="text-base sm:text-lg font-black mb-4 sm:mb-5 flex items-center gap-2 text-white drop-shadow-sm relative z-10">
                     <Settings size={19} className="text-amber-400 shrink-0" />
-                    <span>Active Departments ({departments.length})</span>
+                    <span>{t('org.activeDeptsTitle')} ({departments.length})</span>
                   </h3>
 
                   <div className="space-y-3 sm:space-y-4 relative z-10">
@@ -1004,8 +1006,8 @@ export const OrgDashboard = () => {
                         <div>
                           <h4 className="font-black text-sm sm:text-base text-white">{d.name}</h4>
                           <div className="flex flex-wrap gap-2.5 sm:gap-4 mt-1 text-xs font-semibold text-slate-300">
-                            <span>Avg Service: <strong className="text-amber-400">{d.avgTime} mins</strong></span>
-                            <span>Load: <strong className="text-white">{((liveQueue[d.name] || []).filter(t=>t.status==='waiting')).length} patient(s)</strong></span>
+                            <span>{t('org.avgServiceLabel')} <strong className="text-amber-400">{d.avgTime} {t('patient.mins')}</strong></span>
+                            <span>{t('org.loadLabel')} <strong className="text-white">{((liveQueue[d.name] || []).filter(t=>t.status==='waiting')).length} {t('org.patientUnit')}</strong></span>
                           </div>
                         </div>
 
@@ -1022,7 +1024,7 @@ export const OrgDashboard = () => {
                     {departments.length === 0 && (
                       <div className="flex flex-col items-center justify-center py-10 sm:py-12 text-slate-300 border border-dashed border-white/20 rounded-2xl">
                         <HelpCircle size={36} className="mb-2 text-amber-400/80" />
-                        <span className="font-bold text-xs sm:text-sm">No active departments configured yet.</span>
+                        <span className="font-bold text-xs sm:text-sm">{t('org.noActiveDepts')}</span>
                       </div>
                     )}
                   </div>
@@ -1051,7 +1053,7 @@ export const OrgDashboard = () => {
                       <Package size={22} />
                     </div>
                     <div className="relative z-10">
-                      <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">Total Tracked Items</span>
+                      <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{t('org.totalTrackedItems')}</span>
                       <span className="block text-2xl sm:text-3xl font-black font-mono text-white mt-0.5">{supplies.length}</span>
                     </div>
                   </motion.div>
@@ -1068,7 +1070,7 @@ export const OrgDashboard = () => {
                       <CheckCircle2 size={22} />
                     </div>
                     <div className="relative z-10">
-                      <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">Optimal Stock Items</span>
+                      <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{t('org.optimalStockItems')}</span>
                       <span className="block text-2xl sm:text-3xl font-black font-mono text-white mt-0.5">{supplies.length - lowStockItems.length}</span>
                     </div>
                   </motion.div>
@@ -1085,7 +1087,7 @@ export const OrgDashboard = () => {
                       <AlertTriangle size={22} className="animate-pulse" />
                     </div>
                     <div className="relative z-10">
-                      <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">Low Stock Alerts</span>
+                      <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{t('org.lowStockAlerts')}</span>
                       <span className="block text-2xl sm:text-3xl font-black font-mono text-rose-400 mt-0.5">{lowStockItems.length}</span>
                     </div>
                   </motion.div>
@@ -1105,8 +1107,8 @@ export const OrgDashboard = () => {
                       <Phone size={18} />
                     </div>
                     <div>
-                      <h4 className="text-xs sm:text-sm font-black text-white">Clinic WhatsApp Notification Recipient</h4>
-                      <p className="text-[10px] sm:text-[11px] text-slate-300">Automated restock alerts and emergency patient notices are routed here.</p>
+                      <h4 className="text-xs sm:text-sm font-black text-white">{t('org.waRecipientTitle')}</h4>
+                      <p className="text-[10px] sm:text-[11px] text-slate-300">{t('org.waRecipientDesc')}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -1121,7 +1123,7 @@ export const OrgDashboard = () => {
                       onClick={handleSaveClinicWhatsApp}
                       className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl text-xs cursor-pointer shadow-md transition-all shrink-0"
                     >
-                      Save
+                      {t('org.save')}
                     </button>
                   </div>
                 </motion.div>
@@ -1134,21 +1136,21 @@ export const OrgDashboard = () => {
                     <div className="flex justify-between items-center mb-4 sm:mb-5 relative z-10">
                       <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
                         <Package size={19} className="text-amber-400 shrink-0" />
-                        <span>OPD Medicines & Equipment Inventory</span>
+                        <span>{t('org.opdInventoryTitle')}</span>
                       </h3>
-                      <span className="text-xs font-bold text-slate-300 hidden sm:inline">Real-time Stock Monitor</span>
+                      <span className="text-xs font-bold text-slate-300 hidden sm:inline">{t('org.realtimeStockMonitor')}</span>
                     </div>
 
                     <div className="overflow-x-auto relative z-10 no-scrollbar">
                       <table className="w-full min-w-[620px] text-left text-xs border-collapse">
                         <thead>
                           <tr className="border-b border-white/15 text-slate-300">
-                            <th className="py-2.5 font-bold uppercase">Item Name</th>
-                            <th className="py-2.5 font-bold uppercase">Category</th>
-                            <th className="py-2.5 font-bold uppercase text-center">In Stock</th>
-                            <th className="py-2.5 font-bold uppercase">Safety Min</th>
-                            <th className="py-2.5 font-bold uppercase">Status</th>
-                            <th className="py-2.5 font-bold uppercase text-right">Quick Alert</th>
+                            <th className="py-2.5 font-bold uppercase">{t('org.colItemName')}</th>
+                            <th className="py-2.5 font-bold uppercase">{t('org.colCategory')}</th>
+                            <th className="py-2.5 font-bold uppercase text-center">{t('org.colInStock')}</th>
+                            <th className="py-2.5 font-bold uppercase">{t('org.colSafetyMin')}</th>
+                            <th className="py-2.5 font-bold uppercase">{t('org.status')}</th>
+                            <th className="py-2.5 font-bold uppercase text-right">{t('org.colQuickAlert')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1188,12 +1190,12 @@ export const OrgDashboard = () => {
                                   {isLow ? (
                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 font-black text-[10px] animate-pulse">
                                       <AlertTriangle size={11} />
-                                      <span>LOW STOCK</span>
+                                      <span>{t('org.lowStockBadge')}</span>
                                     </span>
                                   ) : (
                                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 font-bold text-[10px]">
                                       <CheckCircle2 size={11} />
-                                      <span>Optimal</span>
+                                      <span>{t('org.optimalBadge')}</span>
                                     </span>
                                   )}
                                 </td>
@@ -1220,13 +1222,13 @@ export const OrgDashboard = () => {
                     <div className="absolute -top-24 -right-24 w-72 h-72 bg-gradient-to-bl from-white/20 via-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
                     <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2 mb-4 sm:mb-5 relative z-10">
                       <Plus size={19} className="text-amber-400 shrink-0" />
-                      <span>Register Medical Item</span>
+                      <span>{t('org.registerItemTitle')}</span>
                     </h3>
 
                     <form onSubmit={handleAddSupplySubmit} className="space-y-3.5 sm:space-y-4 relative z-10">
                       <div>
                         <label className="block text-[10px] font-bold text-slate-200 uppercase tracking-widest mb-1.5 px-1">
-                          Item / Medicine Name
+                          {t('org.itemNameLabel')}
                         </label>
                         <input
                           type="text"
@@ -1240,23 +1242,23 @@ export const OrgDashboard = () => {
 
                       <div>
                         <label className="block text-[10px] font-bold text-slate-200 uppercase tracking-widest mb-1.5 px-1">
-                          Category
+                          {t('org.colCategory')}
                         </label>
                         <select
                           value={newSupplyCategory}
                           onChange={(e) => setNewSupplyCategory(e.target.value)}
                           className="w-full glass-input rounded-2xl px-4 py-2.5 text-xs text-white font-bold outline-none focus:border-amber-400 shadow-md transition-all cursor-pointer"
                         >
-                          <option value="medicine" className="bg-slate-900 text-white">Medicine / Drug</option>
-                          <option value="disposable" className="bg-slate-900 text-white">OPD Disposable (Syringe, Gloves)</option>
-                          <option value="equipment" className="bg-slate-900 text-white">Clinical Equipment / Diagnostic</option>
+                          <option value="medicine" className="bg-slate-900 text-white">{t('org.catMedicine')}</option>
+                          <option value="disposable" className="bg-slate-900 text-white">{t('org.catDisposable')}</option>
+                          <option value="equipment" className="bg-slate-900 text-white">{t('org.catEquipment')}</option>
                         </select>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-[10px] font-bold text-slate-200 uppercase tracking-widest mb-1.5 px-1">
-                            Initial Qty
+                            {t('org.initialQtyLabel')}
                           </label>
                           <input
                             type="number"
@@ -1270,7 +1272,7 @@ export const OrgDashboard = () => {
 
                         <div>
                           <label className="block text-[10px] font-bold text-slate-200 uppercase tracking-widest mb-1.5 px-1">
-                            Alert Threshold
+                            {t('org.alertThresholdLabel')}
                           </label>
                           <input
                             type="number"
@@ -1285,7 +1287,7 @@ export const OrgDashboard = () => {
 
                       <div>
                         <label className="block text-[10px] font-bold text-slate-200 uppercase tracking-widest mb-1.5 px-1">
-                          Measuring Unit
+                          {t('org.measuringUnitLabel')}
                         </label>
                         <input
                           type="text"
@@ -1303,7 +1305,7 @@ export const OrgDashboard = () => {
                         type="submit"
                         className="w-full py-3 bg-gradient-to-r from-[#e57342] to-[#ff9655] text-slate-950 font-black rounded-2xl text-xs uppercase tracking-wider shadow-lg hover:brightness-110 transition-all cursor-pointer mt-3"
                       >
-                        Add to Stock List
+                        {t('org.addToStockBtn')}
                       </motion.button>
                     </form>
                   </div>
@@ -1336,18 +1338,18 @@ export const OrgDashboard = () => {
                         </div>
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-lg sm:text-xl font-black text-white">Daily Patient Load Forecast</h3>
+                            <h3 className="text-lg sm:text-xl font-black text-white">{t('org.dailyForecastTitle')}</h3>
                             <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[9px] sm:text-[10px] font-black">
-                              {forecast.confidenceRate} AI Confidence
+                              {forecast.confidenceRate} {t('org.aiConfidenceRate')}
                             </span>
                           </div>
-                          <p className="text-xs text-amber-300 font-bold">Predictive Projections for {forecast.dateString}</p>
+                          <p className="text-xs text-amber-300 font-bold">{t('org.projectionsFor')} {forecast.dateString}</p>
                         </div>
                       </div>
 
                       <div className="text-left sm:text-right">
-                        <span className="text-[10px] uppercase tracking-widest text-slate-300 font-bold block">Estimated Inflow</span>
-                        <span className="text-2xl sm:text-3xl font-black font-mono text-white">~{forecast.totalExpected} <span className="text-xs sm:text-sm font-bold text-amber-300">Patients</span></span>
+                        <span className="text-[10px] uppercase tracking-widest text-slate-300 font-bold block">{t('org.estimatedInflow')}</span>
+                        <span className="text-2xl sm:text-3xl font-black font-mono text-white">~{forecast.totalExpected} <span className="text-xs sm:text-sm font-bold text-amber-300">{t('org.patientsLabel')}</span></span>
                       </div>
                     </div>
 
@@ -1357,7 +1359,7 @@ export const OrgDashboard = () => {
                         <div key={dept.name} className="glass-acrylic-pill p-3.5 sm:p-4 rounded-xl sm:rounded-2xl space-y-2 shadow-md">
                           <div className="flex justify-between items-center text-xs">
                             <span className="font-extrabold text-white">{dept.name}</span>
-                            <span className="font-mono font-black text-amber-300">~{dept.expectedPatients} patients</span>
+                            <span className="font-mono font-black text-amber-300">~{dept.expectedPatients} {t('org.patientsLabel')}</span>
                           </div>
                           <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                             <div 
@@ -1367,7 +1369,7 @@ export const OrgDashboard = () => {
                           </div>
                           <div className="flex justify-between text-[10px] text-slate-300 font-bold">
                             <span>Peak: {dept.peakHour}</span>
-                            <span>{dept.recommendedDesks} counter(s) needed</span>
+                            <span>{dept.recommendedDesks} {t('org.countersNeeded')}</span>
                           </div>
                         </div>
                       ))}
@@ -1377,7 +1379,7 @@ export const OrgDashboard = () => {
                     <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/[0.04] border border-white/10 relative z-10 space-y-2">
                       <h4 className="text-xs font-black text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                         <Sparkles size={14} className="shrink-0" />
-                        <span>AI Staffing & Crowd Optimization Recommendations</span>
+                        <span>{t('org.aiStaffingTitle')}</span>
                       </h4>
                       <ul className="space-y-1.5 text-xs text-slate-200">
                         {forecast.aiRecommendations.map((rec, idx) => (
@@ -1423,7 +1425,7 @@ export const OrgDashboard = () => {
                     </div>
                     <div className="relative z-10">
                       <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{t('org.avgWaitTime')}</span>
-                      <span className="block text-2xl sm:text-3xl font-black font-mono text-amber-400 mt-0.5">{avgWaitTimeFormatted} mins</span>
+                      <span className="block text-2xl sm:text-3xl font-black font-mono text-amber-400 mt-0.5">{avgWaitTimeFormatted} {t('patient.mins')}</span>
                     </div>
                   </motion.div>
 
@@ -1439,7 +1441,7 @@ export const OrgDashboard = () => {
                       <AlertTriangle size={22} />
                     </div>
                     <div className="relative z-10">
-                      <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">Auto-skipped Patients</span>
+                      <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{t('org.autoSkippedPatients')}</span>
                       <span className="block text-2xl sm:text-3xl font-black font-mono text-rose-400 mt-0.5">{reports.totalSkipped}</span>
                     </div>
                   </motion.div>
@@ -1456,14 +1458,14 @@ export const OrgDashboard = () => {
                   <div className="absolute -top-24 -left-24 w-72 h-72 bg-gradient-to-br from-white/20 via-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
                   <h3 className="text-base sm:text-lg font-black mb-4 sm:mb-6 flex items-center gap-2 text-white drop-shadow-sm relative z-10">
                     <BarChart3 size={19} className="text-amber-400 shrink-0" />
-                    <span>Historical Patient Inflow - Peak Hours Summary</span>
+                    <span>{t('org.peakHoursTitle')}</span>
                   </h3>
 
                   <div className="space-y-4 sm:space-y-5 relative z-10">
                     <div>
                       <div className="flex justify-between text-xs text-slate-300 mb-1.5 font-bold">
-                        <span>Morning (9:00 AM - 12:00 PM)</span>
-                        <span className="font-mono text-amber-400">45% patient volume (Peak)</span>
+                        <span>{t('org.morningSlot')}</span>
+                        <span className="font-mono text-amber-400">45% {t('org.peakVolume')}</span>
                       </div>
                       <div className="w-full h-2.5 sm:h-3 bg-white/10 rounded-full overflow-hidden shadow-inner">
                         <div className="h-full rounded-full bg-gradient-to-r from-[#e57342] to-[#ff9655]" style={{ width: '45%' }} />
@@ -1472,8 +1474,8 @@ export const OrgDashboard = () => {
 
                     <div>
                       <div className="flex justify-between text-xs text-slate-300 mb-1.5 font-bold">
-                        <span>Afternoon (12:00 PM - 3:00 PM)</span>
-                        <span className="font-mono text-amber-300">35% patient volume</span>
+                        <span>{t('org.afternoonSlot')}</span>
+                        <span className="font-mono text-amber-300">35% {t('org.normalVolume')}</span>
                       </div>
                       <div className="w-full h-2.5 sm:h-3 bg-white/10 rounded-full overflow-hidden shadow-inner">
                         <div className="h-full rounded-full bg-gradient-to-r from-[#e57342] to-[#ff9655]" style={{ width: '35%' }} />
@@ -1482,8 +1484,8 @@ export const OrgDashboard = () => {
 
                     <div>
                       <div className="flex justify-between text-xs text-slate-300 mb-1.5 font-bold">
-                        <span>Evening (3:00 PM - 6:00 PM)</span>
-                        <span className="font-mono text-emerald-400">20% patient volume</span>
+                        <span>{t('org.eveningSlot')}</span>
+                        <span className="font-mono text-emerald-400">20% {t('org.normalVolume')}</span>
                       </div>
                       <div className="w-full h-2.5 sm:h-3 bg-white/10 rounded-full overflow-hidden shadow-inner">
                         <div className="h-full rounded-full bg-gradient-to-r from-[#e57342] to-[#ff9655]" style={{ width: '20%' }} />
@@ -1499,6 +1501,24 @@ export const OrgDashboard = () => {
 
       </main>
 
+      {/* Floating Pill-Shaped Footer */}
+      <footer className="mt-12 sm:mt-16 px-4 flex justify-center relative z-20 pb-6">
+        <div className="glass-acrylic-pill px-6 sm:px-8 py-3.5 rounded-full border border-white/20 bg-[#162d3a]/75 backdrop-blur-2xl shadow-xl flex flex-wrap items-center justify-between gap-4 max-w-4xl w-full text-xs text-slate-300">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-bold text-white tracking-wide">{t('footer.brand')}</span>
+            <span className="text-white/30 hidden sm:inline">•</span>
+            <span className="text-[11px] text-slate-300 hidden sm:inline">{t('footer.liveSync')}</span>
+          </div>
+          <div className="flex items-center gap-4 text-[11px] text-slate-400">
+            <span className="glass-acrylic-pill px-2.5 py-1 rounded-full text-[10px] text-amber-300 border border-amber-300/30 font-mono">
+              {t('footer.encryptedBadge')}
+            </span>
+            <span>© {new Date().getFullYear()} {t('footer.allRights')}</span>
+          </div>
+        </div>
+      </footer>
+
       {/* QR Token Scanner / Verifier Modal */}
       <AnimatePresence>
         {qrModalOpen && (
@@ -1513,7 +1533,7 @@ export const OrgDashboard = () => {
               <div className="flex justify-between items-center pb-3 border-b border-white/15 mb-3.5 sm:mb-4 relative z-10">
                 <div className="flex items-center gap-2">
                   <QrCode size={18} className="text-amber-400" />
-                  <span className="text-sm font-black text-white">Scan / Verify Patient QR Token</span>
+                  <span className="text-sm font-black text-white">{t('org.qrScannerTitle')}</span>
                 </div>
                 <button
                   type="button"
@@ -1531,12 +1551,12 @@ export const OrgDashboard = () => {
               <form onSubmit={handleVerifyQr} className="space-y-3.5 sm:space-y-4">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-200 uppercase tracking-widest mb-1.5 px-1">
-                    Enter or Scan QR Token Payload
+                    {t('org.qrScannerLabel')}
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Paste QR payload, token ID, or Token #"
+                    placeholder={t('org.qrScannerPlaceholder')}
                     value={qrScanInput}
                     onChange={(e) => setQrScanInput(e.target.value)}
                     className="w-full glass-input rounded-2xl px-4 py-2.5 text-xs text-white font-mono font-bold outline-none focus:border-amber-400 shadow-md transition-all"
@@ -1547,7 +1567,7 @@ export const OrgDashboard = () => {
                   type="submit"
                   className="w-full py-2.5 bg-gradient-to-r from-[#e57342] to-[#ff9655] text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider cursor-pointer shadow-lg hover:brightness-110 transition-all"
                 >
-                  Verify Token Now
+                  {t('org.verifyTokenNow')}
                 </button>
               </form>
 
@@ -1561,9 +1581,9 @@ export const OrgDashboard = () => {
                     </span>
                   </div>
                   <div className="text-xs text-slate-200">
-                    <p>Department: <strong>{verifiedTokenResult.deptName}</strong></p>
-                    <p>Phone: <strong>{verifiedTokenResult.token.patientPhone}</strong></p>
-                    <p>Status: <span className="capitalize font-bold text-emerald-300">{verifiedTokenResult.token.status}</span></p>
+                    <p>{t('org.tabDepartments')}: <strong>{verifiedTokenResult.deptName}</strong></p>
+                    <p>{t('org.phone')}: <strong>{verifiedTokenResult.token.patientPhone}</strong></p>
+                    <p>{t('org.status')}: <span className="capitalize font-bold text-emerald-300">{verifiedTokenResult.token.status}</span></p>
                   </div>
                 </div>
               )}
