@@ -169,10 +169,29 @@ export const queueService = {
 
   // 3. Queue Live Listening
   getLiveQueue: (orgId, callback) => {
+    // Helper: Firebase stores arrays as keyed objects {0: item, 1: item, ...}
+    // This converts each department queue back to a proper JS array
+    const normalizeQueue = (rawData) => {
+      if (!rawData || typeof rawData !== 'object') return {};
+      const normalized = {};
+      Object.keys(rawData).forEach((deptName) => {
+        const deptData = rawData[deptName];
+        if (Array.isArray(deptData)) {
+          normalized[deptName] = deptData;
+        } else if (deptData && typeof deptData === 'object') {
+          // Firebase object-of-objects → array
+          normalized[deptName] = Object.values(deptData);
+        } else {
+          normalized[deptName] = [];
+        }
+      });
+      return normalized;
+    };
+
     if (isMockEnabled) {
       const listener = () => {
         const db = getMockDB();
-        callback(db.queues[orgId] || {});
+        callback(normalizeQueue(db.queues[orgId] || {}));
       };
       window.addEventListener('mock-db-update', listener);
       listener();
@@ -180,7 +199,7 @@ export const queueService = {
     } else {
       const queueRef = ref(database, `queues/${orgId}`);
       return onValue(queueRef, (snapshot) => {
-        callback(snapshot.exists() ? snapshot.val() : {});
+        callback(snapshot.exists() ? normalizeQueue(snapshot.val()) : {});
       });
     }
   },
