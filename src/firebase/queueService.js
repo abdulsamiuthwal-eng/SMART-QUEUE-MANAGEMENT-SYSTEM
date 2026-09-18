@@ -92,20 +92,20 @@ export const queueService = {
   },
 
   createUserProfile: async (uid, profileData) => {
+    const userObj = { uid, ...profileData };
     if (isMockEnabled) {
-      const userObj = { uid, ...profileData };
       await localDB.saveUser(userObj);
       const db = getMockDB();
       db.users[uid] = userObj;
       saveMockDB(db);
       return userObj;
     } else {
-      await set(ref(database, `users/${uid}`), profileData);
-      return profileData;
+      await set(ref(database, `users/${uid}`), userObj);
+      return userObj;
     }
   },
 
-  // Get list of all clinics/organizations for Patient dropdown
+  // Get list of all clinics/organizations for Patient dropdown (Async snapshot)
   getOrganizations: async () => {
     if (isMockEnabled) {
       const db = getMockDB();
@@ -114,9 +114,38 @@ export const queueService = {
       const snapshot = await get(ref(database, 'users'));
       if (snapshot.exists()) {
         const users = snapshot.val();
-        return Object.values(users).filter(user => user.role === 'org');
+        return Object.keys(users)
+          .map(uid => ({ uid, ...users[uid] }))
+          .filter(user => user.role === 'org');
       }
       return [];
+    }
+  },
+
+  // Get list of all clinics/organizations for Patient dropdown (Live Real-Time Listener)
+  getOrganizationsLive: (callback) => {
+    if (isMockEnabled) {
+      const listener = () => {
+        const db = getMockDB();
+        const orgs = Object.values(db.users).filter(user => user.role === 'org');
+        callback(orgs);
+      };
+      window.addEventListener('mock-db-update', listener);
+      listener();
+      return () => window.removeEventListener('mock-db-update', listener);
+    } else {
+      const usersRef = ref(database, 'users');
+      return onValue(usersRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const users = snapshot.val();
+          const orgs = Object.keys(users)
+            .map(uid => ({ uid, ...users[uid] }))
+            .filter(user => user.role === 'org');
+          callback(orgs);
+        } else {
+          callback([]);
+        }
+      });
     }
   },
 
@@ -743,11 +772,12 @@ export const queueService = {
     // Monday/Tue/Wed busy, weekends lower
     const weekdayMultiplier = [0.85, 1.35, 1.25, 1.15, 1.2, 0.95, 0.75][dayOfWeek] || 1.1;
 
-    // Base projection calculated dynamically from active clinic size and real inflow
-    const baseProjected = Math.max(
-      Math.round((depts.length * 14 + 12) * weekdayMultiplier),
-      Math.round(((todayTotalActivity || 16) * 2.4 + 18) * weekdayMultiplier)
-    );
+    const hasTrafficToday = todayTotalActivity > 0;
+
+    // Base projection calculated dynamically from real traffic vs baseline readiness
+    const baseProjected = hasTrafficToday
+      ? Math.round((todayTotalActivity * 2.2 + depts.length * 4) * weekdayMultiplier)
+      : Math.max(1, Math.round(depts.length * 3 * weekdayMultiplier));
 
     // Dynamic department breakdown based on real department activity & consultation speeds
     const totalDeptWeight = depts.reduce((sum, d) => {
@@ -758,7 +788,9 @@ export const queueService = {
     const deptForecast = depts.map((d, index) => {
       const activeWeight = (deptTokensCount[d.name] || 0) * 1.5 + (20 / (Number(d.avgTime) || 10));
       const share = activeWeight / totalDeptWeight;
-      const expected = Math.max(4, Math.round(baseProjected * share));
+      const expected = hasTrafficToday
+        ? Math.max(1, Math.round(baseProjected * share))
+        : Math.max(1, Math.round(baseProjected / depts.length));
 
       // Peak hours calculation based on index / department type
       let peakHour = '10:00 AM - 12:30 PM';
@@ -785,24 +817,34 @@ export const queueService = {
     const formattedDate = tomorrow.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 
     // Dynamic AI Recommendations tailored to real clinic state
-    const recommendations = [
-      `Estimated ~${Math.round(baseProjected * 0.55)} patients will arrive during morning peak inflow (9:30 AM - 1:00 PM).`,
-      `${busiest.name} is projected to experience peak demand (~${busiest.expectedPatients} patients) requiring ${busiest.recommendedDesks} active desk(s).`
-    ];
-
-    if (emergencyCount > 0) {
-      recommendations.push(`Detected ${emergencyCount} urgent/emergency case(s) today. Ensure rapid triage counter is staffed at 8:30 AM.`);
+    let recommendations = [];
+    if (!hasTrafficToday) {
+      recommendations = [
+        `No patient queue activity recorded today yet. Baseline readiness active across all ${depts.length} department(s).`,
+        `Counters ready for incoming traffic; projections will automatically recalibrate in real-time as live tokens check in.`
+      ];
     } else {
-      recommendations.push(`Keep 2 counter staff active during the predicted 10:30 AM - 1:00 PM surge window for zero wait backlog.`);
+      recommendations = [
+        `Estimated ~${Math.round(baseProjected * 0.55)} patients will arrive during morning peak inflow (9:30 AM - 1:00 PM).`,
+        `${busiest.name} is projected to experience peak demand (~${busiest.expectedPatients} patients) requiring ${busiest.recommendedDesks} active desk(s).`
+      ];
+
+      if (emergencyCount > 0) {
+        recommendations.push(`Detected ${emergencyCount} urgent/emergency case(s) today. Ensure rapid triage counter is staffed at 8:30 AM.`);
+      } else {
+        recommendations.push(`Keep desk coverage active during predicted rush window for zero wait backlog.`);
+      }
     }
 
-    const dynamicConfidence = Math.min(97, Math.max(90, 88 + (todayTotalActivity > 0 ? 5 : 2) + Math.min(4, depts.length)));
+    const dynamicConfidence = hasTrafficToday
+      ? `${Math.min(97, 89 + Math.min(6, todayTotalActivity))}% AI Confidence`
+      : 'Ready (Awaiting Live Inflow)';
 
     return {
       dateString: formattedDate,
       totalExpected: baseProjected,
-      confidenceRate: `${dynamicConfidence}%`,
-      predictedPeakWindow: '10:30 AM - 01:00 PM',
+      confidenceRate: dynamicConfidence,
+      predictedPeakWindow: hasTrafficToday ? '10:30 AM - 01:00 PM' : 'General OPD Hours',
       deptForecast,
       aiRecommendations: recommendations
     };

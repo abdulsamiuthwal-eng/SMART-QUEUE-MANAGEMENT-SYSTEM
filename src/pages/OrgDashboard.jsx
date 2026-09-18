@@ -319,18 +319,15 @@ export const OrgDashboard = () => {
   let avgWaitTimeFormatted = 0;
   if (allCompletedTokens.length > 0) {
     const totalMins = allCompletedTokens.reduce((acc, t) => {
-      const wait = t.completedAt ? Math.round((t.completedAt - t.timestamp) / 60000) : 10;
+      const wait = t.completedAt ? Math.round((t.completedAt - t.timestamp) / 60000) : 0;
       return acc + Math.max(1, wait);
     }, 0);
     avgWaitTimeFormatted = Math.round(totalMins / allCompletedTokens.length);
   } else if (reports.totalServed > 0 && reports.totalWaitTime > 0) {
     avgWaitTimeFormatted = Math.round(reports.totalWaitTime / reports.totalServed);
-  } else if (departments.length > 0) {
-    avgWaitTimeFormatted = Math.round(
-      departments.reduce((acc, d) => acc + (Number(d.avgTime) || 10), 0) / departments.length
-    );
   } else {
-    avgWaitTimeFormatted = 10;
+    // When no patients have completed yet, wait time is genuinely 0
+    avgWaitTimeFormatted = 0;
   }
 
   // Real-time Hourly Token Inflow calculation from tokens created today
@@ -352,9 +349,9 @@ export const OrgDashboard = () => {
 
   const totalInflowCount = morningTokens.length + afternoonTokens.length + eveningTokens.length;
 
-  let morningPct = 45;
-  let afternoonPct = 35;
-  let eveningPct = 20;
+  let morningPct = 0;
+  let afternoonPct = 0;
+  let eveningPct = 0;
 
   if (totalInflowCount > 0) {
     morningPct = Math.round((morningTokens.length / totalInflowCount) * 100);
@@ -1526,7 +1523,9 @@ export const OrgDashboard = () => {
                       <span>{t('org.peakHoursTitle')}</span>
                     </h3>
                     <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-white/10 text-slate-300 border border-white/15">
-                      {totalInflowCount} {totalInflowCount === 1 ? 'patient' : 'patients'} tracked today
+                      {totalInflowCount > 0 
+                        ? `${totalInflowCount} ${totalInflowCount === 1 ? 'patient' : 'patients'} tracked today`
+                        : '0 patients tracked today (Queue idle)'}
                     </span>
                   </div>
 
@@ -1535,13 +1534,15 @@ export const OrgDashboard = () => {
                       <div className="flex justify-between text-xs text-slate-300 mb-1.5 font-bold">
                         <span>{t('org.morningSlot')}</span>
                         <span className="font-mono text-amber-400">
-                          {morningPct}% {morningTokens.length > 0 ? `(${morningTokens.length} ${t('org.patientsLabel')})` : ''} {t('org.peakVolume')}
+                          {totalInflowCount > 0 
+                            ? `${morningPct}% (${morningTokens.length} ${t('org.patientsLabel')}) ${t('org.peakVolume')}`
+                            : '0% (0 patients)'}
                         </span>
                       </div>
                       <div className="w-full h-2.5 sm:h-3 bg-white/10 rounded-full overflow-hidden shadow-inner">
                         <div 
                           className="h-full rounded-full bg-gradient-to-r from-[#e57342] to-[#ff9655] transition-all duration-700" 
-                          style={{ width: `${Math.max(4, morningPct)}%` }} 
+                          style={{ width: `${totalInflowCount > 0 ? Math.max(4, morningPct) : 0}%` }} 
                         />
                       </div>
                     </div>
@@ -1550,13 +1551,15 @@ export const OrgDashboard = () => {
                       <div className="flex justify-between text-xs text-slate-300 mb-1.5 font-bold">
                         <span>{t('org.afternoonSlot')}</span>
                         <span className="font-mono text-amber-300">
-                          {afternoonPct}% {afternoonTokens.length > 0 ? `(${afternoonTokens.length} ${t('org.patientsLabel')})` : ''} {t('org.normalVolume')}
+                          {totalInflowCount > 0 
+                            ? `${afternoonPct}% (${afternoonTokens.length} ${t('org.patientsLabel')}) ${t('org.normalVolume')}`
+                            : '0% (0 patients)'}
                         </span>
                       </div>
                       <div className="w-full h-2.5 sm:h-3 bg-white/10 rounded-full overflow-hidden shadow-inner">
                         <div 
                           className="h-full rounded-full bg-gradient-to-r from-[#e57342] to-[#ff9655] transition-all duration-700" 
-                          style={{ width: `${Math.max(4, afternoonPct)}%` }} 
+                          style={{ width: `${totalInflowCount > 0 ? Math.max(4, afternoonPct) : 0}%` }} 
                         />
                       </div>
                     </div>
@@ -1565,13 +1568,15 @@ export const OrgDashboard = () => {
                       <div className="flex justify-between text-xs text-slate-300 mb-1.5 font-bold">
                         <span>{t('org.eveningSlot')}</span>
                         <span className="font-mono text-emerald-400">
-                          {eveningPct}% {eveningTokens.length > 0 ? `(${eveningTokens.length} ${t('org.patientsLabel')})` : ''} {t('org.normalVolume')}
+                          {totalInflowCount > 0 
+                            ? `${eveningPct}% (${eveningTokens.length} ${t('org.patientsLabel')}) ${t('org.normalVolume')}`
+                            : '0% (0 patients)'}
                         </span>
                       </div>
                       <div className="w-full h-2.5 sm:h-3 bg-white/10 rounded-full overflow-hidden shadow-inner">
                         <div 
                           className="h-full rounded-full bg-gradient-to-r from-[#e57342] to-[#ff9655] transition-all duration-700" 
-                          style={{ width: `${Math.max(4, eveningPct)}%` }} 
+                          style={{ width: `${totalInflowCount > 0 ? Math.max(4, eveningPct) : 0}%` }} 
                         />
                       </div>
                     </div>

@@ -88,43 +88,57 @@ export const PatientDashboard = () => {
     };
   }, []);
 
-  // 1. Fetch available clinics on load
+  // 1. Fetch available registered clinics on load and listen in real-time
   useEffect(() => {
-    const fetchClinics = async () => {
-      try {
-        const list = await queueService.getOrganizations();
-        setClinics(list);
-        if (list.length > 0) {
-          setSelectedClinic(list[0].uid);
+    let isMounted = true;
+    const unsubscribeClinics = queueService.getOrganizationsLive((list) => {
+      if (!isMounted) return;
+      const validClinics = list || [];
+      setClinics(validClinics);
+      setSelectedClinic((prev) => {
+        // If current clinic exists in updated list, keep it; else select first registered clinic
+        if (prev && validClinics.some(c => c.uid === prev)) {
+          return prev;
         }
-      } catch (err) {
-        console.error("Error fetching clinics:", err);
-      } finally {
-        setTimeout(() => setPageLoading(false), 650);
-      }
-    };
-    fetchClinics();
-    
+        return validClinics.length > 0 ? validClinics[0].uid : '';
+      });
+      setPageLoading(false);
+    });
+
     setNotifications([
       { id: 1, text: 'Welcome to Smart Queue! Keep this window open for live updates.', time: 'Just now' }
     ]);
+
+    return () => {
+      isMounted = false;
+      if (typeof unsubscribeClinics === 'function') unsubscribeClinics();
+    };
   }, []);
 
   // 2. Fetch departments and listen to live queues when selectedClinic changes
   useEffect(() => {
-    if (!selectedClinic) return;
+    if (!selectedClinic) {
+      setDepartments([]);
+      setSelectedDept('');
+      setLiveQueue({});
+      return;
+    }
 
     const unsubscribeDepts = queueService.getDepartments(selectedClinic, (data) => {
-      setDepartments(data);
-      if (data.length > 0) {
-        setSelectedDept(prev => prev || data[0].name);
+      const validDepts = data || [];
+      setDepartments(validDepts);
+      if (validDepts.length > 0) {
+        setSelectedDept(prev => {
+          if (prev && validDepts.some(d => d.name === prev)) return prev;
+          return validDepts[0].name;
+        });
       } else {
         setSelectedDept('');
       }
     });
 
     const unsubscribeQueue = queueService.getLiveQueue(selectedClinic, (queueData) => {
-      setLiveQueue(queueData);
+      setLiveQueue(queueData || {});
     });
 
     return () => {
@@ -375,7 +389,8 @@ export const PatientDashboard = () => {
   };
 
   const { serving, position, waitTime } = getPositionDetails();
-  const selectedClinicName = clinics.find(c => c.uid === selectedClinic)?.hospitalName || 'Clinic';
+  const currentClinicObj = clinics.find(c => c.uid === selectedClinic);
+  const selectedClinicName = currentClinicObj?.hospitalName || currentClinicObj?.name || 'Clinic';
 
   // Card Fade Scroll Animation Configuration
   const fadeScrollVariants = {
@@ -574,7 +589,7 @@ export const PatientDashboard = () => {
                   placeholder={t('patient.selectFacilityPlaceholder')}
                   options={clinics.map(clinic => ({
                     value: clinic.uid,
-                    label: clinic.hospitalName,
+                    label: clinic.hospitalName || clinic.name || 'Clinic',
                     badge: t('patient.verified')
                   }))}
                 />
