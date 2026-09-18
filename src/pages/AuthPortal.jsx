@@ -20,6 +20,7 @@ import {
   EyeOff,
   UserCheck,
   Building2,
+  CheckCircle2,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import bgArt from '../assets/queue_lounge_art.webp';
@@ -37,9 +38,9 @@ export const AuthPortal = ({ initialView = 'welcome' }) => {
   const { currentUser, login, loginWithGoogle, logout } = useAuth();
   const { t, locale, toggleLanguage } = useLanguage();
 
-  const isInitialLogin = location.pathname === '/login' || initialView === 'login';
+  const isInitialLogin = location.pathname === '/login' || initialView === 'login' || Boolean(location.state?.registeredSuccess);
   const [isLogin, setIsLogin] = useState(isInitialLogin);
-  const [hasUserTransitioned, setHasUserTransitioned] = useState(false);
+  const [hasUserTransitioned, setHasUserTransitioned] = useState(Boolean(location.state?.registeredSuccess));
 
   // Sync state with route changes and popstate (browser back/forward)
   useEffect(() => {
@@ -55,14 +56,36 @@ export const AuthPortal = ({ initialView = 'welcome' }) => {
     return () => window.removeEventListener('popstate', syncRoute);
   }, [location.pathname]);
 
-  // Login form state
-  const [email, setEmail] = useState('');
+  // Login form state - pre-fills registered email if arrived from Register page
+  const [email, setEmail] = useState(() => location.state?.registeredEmail || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [regSuccessMsg, setRegSuccessMsg] = useState(() => 
+    location.state?.registeredSuccess 
+      ? (locale === 'ur' 
+          ? 'اکاؤنٹ کامیابی سے بن گیا ہے! برائے مہربانی اپنا پاس ورڈ درج کر کے لاگ ان کریں۔' 
+          : 'Account registered successfully! Please sign in with your password to continue.')
+      : ''
+  );
   const [loading, setLoading] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
   const [destPath, setDestPath] = useState('');
+
+  // Update email and success banner when navigated from register
+  useEffect(() => {
+    if (location.state?.registeredEmail) {
+      setEmail(location.state.registeredEmail);
+      setIsLogin(true);
+      if (location.state?.registeredSuccess) {
+        setRegSuccessMsg(
+          locale === 'ur'
+            ? 'اکاؤنٹ کامیابی سے بن گیا ہے! برائے مہربانی اپنا پاس ورڈ درج کر کے لاگ ان کریں۔'
+            : 'Account registered successfully! Please sign in with your password to continue.'
+        );
+      }
+    }
+  }, [location.state, locale]);
 
   // Handle click on "Get Started" -> if logged in, go straight to active dashboard; else transition to login
   const handleGetStarted = () => {
@@ -388,6 +411,14 @@ export const AuthPortal = ({ initialView = 'welcome' }) => {
                   <span>{t('login.encryptedHealthPortal')}</span>
                 </div>
               </div>
+
+              {/* Registration Success Banner */}
+              {regSuccessMsg && (
+                <div className="flex items-center gap-2.5 bg-emerald-950/70 border border-emerald-400/40 text-emerald-200 p-3 rounded-2xl text-xs mb-4 font-bold backdrop-blur-md shadow-lg">
+                  <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                  <span>{regSuccessMsg}</span>
+                </div>
+              )}
 
               {/* Error Alert Box */}
               {error && (

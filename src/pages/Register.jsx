@@ -60,7 +60,14 @@ export const Register = () => {
           phone: patientPhone
         });
         setSuccess(t('register.successPatient'));
-        setTimeout(() => navigate('/login'), 1200);
+        setTimeout(() => {
+          navigate('/login', {
+            state: {
+              registeredEmail: patientEmail,
+              registeredSuccess: true
+            }
+          });
+        }, 1100);
       } else {
         await register({
           email: orgEmail,
@@ -71,7 +78,14 @@ export const Register = () => {
           address: orgAddress
         });
         setSuccess(t('register.successOrg'));
-        setTimeout(() => navigate('/login'), 1200);
+        setTimeout(() => {
+          navigate('/login', {
+            state: {
+              registeredEmail: orgEmail,
+              registeredSuccess: true
+            }
+          });
+        }, 1100);
       }
     } catch (err) {
       console.error(err);

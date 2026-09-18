@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { auth, googleProvider, isMockEnabled } from '../firebase/firebaseConfig';
 import { 
   createUserWithEmailAndPassword, 
@@ -17,6 +17,9 @@ const MOCK_AUTH_KEY = 'smart_queue_mock_auth';
 const SESSION_CACHE_KEY = 'smart_queue_session_cache';
 
 export const AuthProvider = ({ children }) => {
+  // Flag to prevent auto-login when creating a new account on Firebase
+  const isRegisteringRef = useRef(false);
+
   // Synchronous session hydration on initial boot / browser refresh
   const [currentUser, setCurrentUser] = useState(() => {
     try {
@@ -97,6 +100,11 @@ export const AuthProvider = ({ children }) => {
       return () => window.removeEventListener('mock-db-update', syncAuth);
     } else {
       const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        // Prevent auto-login when an account is being freshly registered
+        if (isRegisteringRef.current) {
+          return;
+        }
+
         if (user) {
           try {
             const profile = await queueService.getUserProfile(user.uid);
@@ -169,10 +177,20 @@ export const AuthProvider = ({ children }) => {
       // User must be redirected to login page to authenticate explicitly!
       return { uid, email, role: 'patient', ...profile };
     } else {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const profile = { name, email, phone, role: 'patient' };
-      await queueService.createUserProfile(userCredential.user.uid, profile);
-      return userCredential.user;
+      try {
+        isRegisteringRef.current = true;
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const profile = { name, email, phone, role: 'patient' };
+        await queueService.createUserProfile(userCredential.user.uid, profile);
+
+        // Sign out immediately so newly registered users are NOT auto-logged in,
+        // and must sign in explicitly from the login screen!
+        await signOut(auth);
+        persistUser(null);
+        return { uid: userCredential.user.uid, email, role: 'patient', ...profile };
+      } finally {
+        isRegisteringRef.current = false;
+      }
     }
   };
 
@@ -206,16 +224,25 @@ export const AuthProvider = ({ children }) => {
       // DO NOT set currentUser or MOCK_AUTH_KEY here!
       return { uid, email, role: 'org', ...profile };
     } else {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const profile = { hospitalName, email, phone, address, role: 'org' };
-      await queueService.createUserProfile(userCredential.user.uid, profile);
-      
-      // Seed default departments & 12 supplies on real Firebase
-      await queueService.addDepartment(userCredential.user.uid, 'General OPD', 10);
-      await queueService.addDepartment(userCredential.user.uid, 'Emergency', 5);
-      await queueService.seedDefaultSupplies(userCredential.user.uid);
-      
-      return userCredential.user;
+      try {
+        isRegisteringRef.current = true;
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const profile = { hospitalName, email, phone, address, role: 'org' };
+        await queueService.createUserProfile(userCredential.user.uid, profile);
+        
+        // Seed default departments & 12 supplies on real Firebase
+        await queueService.addDepartment(userCredential.user.uid, 'General OPD', 10);
+        await queueService.addDepartment(userCredential.user.uid, 'Emergency', 5);
+        await queueService.seedDefaultSupplies(userCredential.user.uid);
+        
+        // Sign out immediately so newly registered users are NOT auto-logged in,
+        // and must sign in explicitly from the login screen!
+        await signOut(auth);
+        persistUser(null);
+        return { uid: userCredential.user.uid, email, role: 'org', ...profile };
+      } finally {
+        isRegisteringRef.current = false;
+      }
     }
   };
 
