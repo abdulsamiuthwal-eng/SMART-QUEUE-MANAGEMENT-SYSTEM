@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { queueService } from '../firebase/queueService';
@@ -174,6 +174,55 @@ export const PatientDashboard = () => {
       setActiveToken(null);
     }
   }, [liveQueue, selectedClinic, currentUser]);
+
+  // Web Audio chime helper for real-time turn alert (soothing two-tone bell)
+  const playCounterChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, now); // D5
+      osc.frequency.setValueAtTime(880.00, now + 0.18); // A5
+
+      gain.gain.setValueAtTime(0.01, now);
+      gain.gain.linearRampToValueAtTime(0.25, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 1.2);
+    } catch (e) {
+      // Audio playback blocked until user interaction
+    }
+  };
+
+  const prevTokenStatusRef = useRef(null);
+
+  // Monitor live real-time status transitions for patient's token
+  useEffect(() => {
+    if (activeToken) {
+      if (prevTokenStatusRef.current === 'waiting' && activeToken.status === 'serving') {
+        playCounterChime();
+        triggerAlert('success', `🔔 ${t('patient.servingNow')}! Token #${activeToken.tokenNumber} - Please proceed to ${activeToken.deptName} Room.`);
+        addNotification(`🔔 Your token #${activeToken.tokenNumber} is now being served!`);
+      }
+      prevTokenStatusRef.current = activeToken.status;
+    } else {
+      if (prevTokenStatusRef.current === 'serving') {
+        triggerAlert('info', `✅ Consultation completed for your token. Thank you!`);
+        addNotification(`Consultation completed.`);
+      }
+      prevTokenStatusRef.current = null;
+    }
+  }, [activeToken?.status]);
 
   // Fetch patient past token history whenever selected clinic or user changes
   const fetchClinicHistory = async () => {
@@ -379,7 +428,20 @@ export const PatientDashboard = () => {
 
     const deptInfo = departments.find(d => d.name === activeToken.deptName);
     const avgTime = deptInfo ? deptInfo.avgTime : 10;
-    const waitTime = userIndex !== -1 ? (activeToken.isEmergency ? 0 : userIndex * avgTime) : (activeToken.status === 'serving' ? 0 : '-');
+    
+    let waitTime = '-';
+    if (activeToken.status === 'serving') {
+      waitTime = 0;
+    } else if (activeToken.isEmergency) {
+      waitTime = 1;
+    } else if (userIndex !== -1) {
+      if (userIndex === 0) {
+        // Next in line: wait for currently serving patient to finish (~avgTime), or counter call (~5m)
+        waitTime = servingTokenObj ? avgTime : 5;
+      } else {
+        waitTime = userIndex * avgTime + (servingTokenObj ? Math.round(avgTime / 2) : 0);
+      }
+    }
 
     return {
       serving: servingNum,
@@ -629,28 +691,38 @@ export const PatientDashboard = () => {
                         initial={{ scale: 0.95 }}
                         animate={{ scale: 1 }}
                         className={`p-4 sm:p-6 rounded-[22px] sm:rounded-[28px] ${
-                          activeToken.isEmergency 
-                            ? 'bg-gradient-to-br from-rose-600 via-rose-500 to-amber-500 text-white border-2 border-rose-300 shadow-[0_16px_50px_rgba(225,29,72,0.5)] ring-4 ring-rose-400/30 animate-pulse' 
-                            : 'bg-gradient-to-br from-[#ea580c] via-[#f97316] to-[#f59e0b] text-slate-950 border border-amber-300/50 shadow-[0_16px_50px_rgba(234,88,12,0.4)]'
+                          activeToken.status === 'serving'
+                            ? 'bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-500 text-white border-2 border-emerald-300 shadow-[0_16px_50px_rgba(16,185,129,0.55)] ring-4 ring-emerald-400/40 animate-pulse'
+                            : (activeToken.isEmergency 
+                                ? 'bg-gradient-to-br from-rose-600 via-rose-500 to-amber-500 text-white border-2 border-rose-300 shadow-[0_16px_50px_rgba(225,29,72,0.5)] ring-4 ring-rose-400/30 animate-pulse' 
+                                : 'bg-gradient-to-br from-[#ea580c] via-[#f97316] to-[#f59e0b] text-slate-950 border border-amber-300/50 shadow-[0_16px_50px_rgba(234,88,12,0.4)]')
                         } flex flex-col items-center justify-center text-center relative overflow-hidden`}
                       >
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl pointer-events-none" />
                         
                         <div className="flex items-center gap-1.5 mb-1">
-                          <span className={`text-[10px] sm:text-xs font-black tracking-widest uppercase ${activeToken.isEmergency ? 'text-white' : 'text-slate-950/85'}`}>
-                            {activeToken.isEmergency ? t('patient.emergencyPriorityBadge') : t('patient.activeToken')}
+                          <span className={`text-[10px] sm:text-xs font-black tracking-widest uppercase ${activeToken.status === 'serving' || activeToken.isEmergency ? 'text-white' : 'text-slate-950/85'}`}>
+                            {activeToken.status === 'serving'
+                              ? t('patient.yourTurnNow')
+                              : (activeToken.isEmergency ? t('patient.emergencyPriorityBadge') : t('patient.activeToken'))}
                           </span>
                         </div>
 
-                        <span className={`text-5xl xs:text-6xl sm:text-7xl font-black font-mono tracking-tight my-1.5 sm:my-2 drop-shadow-sm ${activeToken.isEmergency ? 'text-white' : 'text-slate-950'}`}>
+                        <span className={`text-5xl xs:text-6xl sm:text-7xl font-black font-mono tracking-tight my-1.5 sm:my-2 drop-shadow-sm ${activeToken.status === 'serving' || activeToken.isEmergency ? 'text-white' : 'text-slate-950'}`}>
                           #{activeToken.tokenNumber}
                         </span>
-                        <span className={`text-xs font-black px-3.5 py-1 rounded-full ${activeToken.isEmergency ? 'bg-white/20 border border-white/40 text-white' : 'bg-slate-950/20 border border-slate-950/30 text-slate-950'}`}>
+                        <span className={`text-xs font-black px-3.5 py-1 rounded-full ${
+                          activeToken.status === 'serving' || activeToken.isEmergency
+                            ? 'bg-white/20 border border-white/40 text-white' 
+                            : 'bg-slate-950/20 border border-slate-950/30 text-slate-950'
+                        }`}>
                           {activeToken.deptName}
                         </span>
                         
                         {/* Booking metadata */}
-                        <div className={`flex flex-wrap gap-2.5 sm:gap-4 mt-4 sm:mt-6 text-xs border-t pt-3 sm:pt-4 w-full justify-center font-bold ${activeToken.isEmergency ? 'border-white/20 text-white' : 'border-slate-950/20 text-slate-950/85'}`}>
+                        <div className={`flex flex-wrap gap-2.5 sm:gap-4 mt-4 sm:mt-6 text-xs border-t pt-3 sm:pt-4 w-full justify-center font-bold ${
+                          activeToken.status === 'serving' || activeToken.isEmergency ? 'border-white/20 text-white' : 'border-slate-950/20 text-slate-950/85'
+                        }`}>
                           <div className="flex items-center gap-1.5">
                             <Ticket size={13} />
                             <span className="capitalize">{activeToken.type === 'appointment' ? t('patient.appointmentTag') : t('patient.walkinQueueTag')}</span>
@@ -679,20 +751,32 @@ export const PatientDashboard = () => {
                       <div className="grid grid-cols-1 xs:grid-cols-3 md:grid-cols-1 gap-2.5 sm:gap-4">
                         <div className="glass-acrylic-pill p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-row xs:flex-col md:flex-row items-center justify-between xs:justify-center md:justify-between text-left xs:text-center md:text-left gap-2 shadow-lg">
                           <span className="text-[10px] sm:text-xs text-slate-200 font-bold uppercase tracking-wider">{t('patient.servingToken')}</span>
-                          <span className="text-xl sm:text-2xl font-black font-mono text-amber-400 drop-shadow-sm">#{serving}</span>
+                          <span className={`text-xl sm:text-2xl font-black font-mono drop-shadow-sm ${serving !== '-' ? 'text-amber-400' : 'text-slate-300 text-sm sm:text-base font-sans font-bold'}`}>
+                            {serving !== '-' ? `#${serving}` : t('patient.counterIdle')}
+                          </span>
                         </div>
 
                         <div className="glass-acrylic-pill p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-row xs:flex-col md:flex-row items-center justify-between xs:justify-center md:justify-between text-left xs:text-center md:text-left gap-2 shadow-lg">
                           <span className="text-[10px] sm:text-xs text-slate-200 font-bold uppercase tracking-wider">{t('patient.yourPosition')}</span>
                           <span className={`text-xl sm:text-2xl font-black font-mono ${position === 0 ? 'text-emerald-400 animate-pulse' : (activeToken.isEmergency ? 'text-rose-300 font-bold text-base' : 'text-white')}`}>
-                            {position === 0 ? t('patient.servingNow') : (activeToken.isEmergency ? t('patient.positionTop') : position)}
+                            {position === 0 
+                              ? t('patient.servingNow') 
+                              : (activeToken.isEmergency 
+                                  ? t('patient.positionTop') 
+                                  : (position === 1 ? `#1 (${t('patient.nextInLine')})` : `#${position}`))}
                           </span>
                         </div>
 
                         <div className="glass-acrylic-pill p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-row xs:flex-col md:flex-row items-center justify-between xs:justify-center md:justify-between text-left xs:text-center md:text-left gap-2 shadow-lg">
                           <span className="text-[10px] sm:text-xs text-slate-200 font-bold uppercase tracking-wider">{t('patient.estWait')}</span>
                           <span className="text-xl sm:text-2xl font-black font-mono text-amber-300 drop-shadow-sm">
-                            {activeToken.isEmergency ? t('patient.zeroMins') : (waitTime !== '-' ? `${waitTime} ${t('patient.mins')}` : '-')}
+                            {activeToken.status === 'serving'
+                              ? t('patient.servingNow')
+                              : (activeToken.isEmergency
+                                  ? t('patient.emergencyImmediate')
+                                  : (waitTime !== '-'
+                                      ? (waitTime === 0 ? t('patient.servingNow') : `${waitTime} ${t('patient.mins')}`)
+                                      : '-'))}
                           </span>
                         </div>
                       </div>
@@ -817,7 +901,7 @@ export const PatientDashboard = () => {
                             <div>
                               <span className="font-extrabold text-white text-sm">{dept.name}</span>
                               <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-200 font-semibold">
-                                <span>{t('patient.servingPrefix')} <strong className="text-amber-400 font-mono font-extrabold">#{servingToken ? servingToken.tokenNumber : '-'}</strong></span>
+                                <span>{t('patient.servingPrefix')} <strong className={`font-mono font-extrabold ${servingToken ? 'text-amber-400' : 'text-slate-400 text-[11px]'}`}>{servingToken ? `#${servingToken.tokenNumber}` : t('patient.counterIdle')}</strong></span>
                                 <span className="w-1 h-1 rounded-full bg-slate-400" />
                                 <span>{t('patient.waitingPrefix')} <strong className="text-white font-extrabold">{waitingCount}</strong></span>
                               </div>

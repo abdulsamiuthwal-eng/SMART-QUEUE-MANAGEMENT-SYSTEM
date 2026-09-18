@@ -59,10 +59,59 @@ const getMockDB = () => {
   return db;
 };
 
+// Multi-Channel Cross-Tab and In-Tab Synchronization Helper
+const SYNC_CHANNEL_NAME = 'smart_queue_sync_channel';
+let syncChannel = null;
+try {
+  if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
+    syncChannel = new BroadcastChannel(SYNC_CHANNEL_NAME);
+  }
+} catch (e) {
+  // BroadcastChannel unavailable in current environment
+}
+
+export const dispatchMockDBUpdate = () => {
+  if (typeof window === 'undefined') return;
+  // 1. In-tab custom event
+  window.dispatchEvent(new CustomEvent('mock-db-update'));
+  // 2. Cross-tab BroadcastChannel
+  if (syncChannel) {
+    try {
+      syncChannel.postMessage({ type: 'mock-db-update', timestamp: Date.now() });
+    } catch (e) {}
+  }
+};
+
+export const subscribeToMockUpdates = (callback) => {
+  if (typeof window === 'undefined') return () => {};
+  const handler = () => callback();
+  // In-tab event
+  window.addEventListener('mock-db-update', handler);
+  // Cross-tab native storage event (fires in all other tabs when localStorage changes)
+  const storageHandler = (e) => {
+    if (e.key === MOCK_STORAGE_KEY || !e.key) {
+      callback();
+    }
+  };
+  window.addEventListener('storage', storageHandler);
+  // Cross-tab BroadcastChannel event
+  const channelHandler = () => callback();
+  if (syncChannel) {
+    syncChannel.addEventListener('message', channelHandler);
+  }
+
+  return () => {
+    window.removeEventListener('mock-db-update', handler);
+    window.removeEventListener('storage', storageHandler);
+    if (syncChannel) {
+      syncChannel.removeEventListener('message', channelHandler);
+    }
+  };
+};
+
 const saveMockDB = (db) => {
   localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(db));
-  // Dispatch custom event to notify listeners on other pages/components
-  window.dispatchEvent(new CustomEvent('mock-db-update'));
+  dispatchMockDBUpdate();
 };
 
 // Initialize Mock Clinic profile if it doesn't exist
@@ -136,9 +185,9 @@ export const queueService = {
         const orgs = Object.values(db.users).filter(user => user.role === 'org');
         callback(orgs);
       };
-      window.addEventListener('mock-db-update', listener);
+      const unsubscribe = subscribeToMockUpdates(listener);
       listener();
-      return () => window.removeEventListener('mock-db-update', listener);
+      return unsubscribe;
     } else {
       const usersRef = ref(database, 'users');
       return onValue(usersRef, (snapshot) => {
@@ -162,9 +211,9 @@ export const queueService = {
         const db = getMockDB();
         callback(db.departments[orgId] || []);
       };
-      window.addEventListener('mock-db-update', listener);
+      const unsubscribe = subscribeToMockUpdates(listener);
       listener();
-      return () => window.removeEventListener('mock-db-update', listener);
+      return unsubscribe;
     } else {
       const deptRef = ref(database, `departments/${orgId}`);
       return onValue(deptRef, (snapshot) => {
@@ -228,9 +277,9 @@ export const queueService = {
         const db = getMockDB();
         callback(normalizeQueue(db.queues[orgId] || {}));
       };
-      window.addEventListener('mock-db-update', listener);
+      const unsubscribe = subscribeToMockUpdates(listener);
       listener();
-      return () => window.removeEventListener('mock-db-update', listener);
+      return unsubscribe;
     } else {
       const queueRef = ref(database, `queues/${orgId}`);
       return onValue(queueRef, (snapshot) => {
@@ -649,9 +698,9 @@ export const queueService = {
         const db = getMockDB();
         callback(db.reports[orgId] || { totalServed: 0, totalWaitTime: 0, totalSkipped: 0 });
       };
-      window.addEventListener('mock-db-update', listener);
+      const unsubscribe = subscribeToMockUpdates(listener);
       listener();
-      return () => window.removeEventListener('mock-db-update', listener);
+      return unsubscribe;
     } else {
       const reportRef = ref(database, `reports/${orgId}`);
       return onValue(reportRef, (snapshot) => {
@@ -670,7 +719,6 @@ export const queueService = {
       if (!db.supplies) db.supplies = {};
       db.supplies[orgId] = defaultSuppliesList;
       saveMockDB(db);
-      window.dispatchEvent(new CustomEvent('mock-db-update'));
       return defaultSuppliesList;
     } else {
       const supRef = ref(database, `supplies/${orgId}`);
@@ -699,9 +747,9 @@ export const queueService = {
         }
         callback(db.supplies[orgId] || []);
       };
-      window.addEventListener('mock-db-update', listener);
+      const unsubscribe = subscribeToMockUpdates(listener);
       listener();
-      return () => window.removeEventListener('mock-db-update', listener);
+      return unsubscribe;
     } else {
       const supRef = ref(database, `supplies/${orgId}`);
       return onValue(supRef, async (snapshot) => {
