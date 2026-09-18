@@ -65,7 +65,10 @@ export const TriageChatbot = ({
 
   const clinicQuickPrompts = [
     { labelEn: "Waiting patients count", labelUr: "انتظار کرنے والے مریض", text: "How many patients are waiting in queue right now?" },
+    { labelEn: "Emergency triage alerts", labelUr: "ایمرجنسی مریض الرٹ", text: "Are there any emergency or urgent patients waiting in queue?" },
+    { labelEn: "Department rush breakdown", labelUr: "ہر شعبے کا رش (Breakdown)", text: "Show waiting breakdown for all departments" },
     { labelEn: "Check low stock supplies", labelUr: "سامان کا کم اسٹاک چیک کریں", text: "Are any medicines or equipment low on stock?" },
+    { labelEn: "Today's wait time & served", labelUr: "اوسط وقت اور فارغ مریض", text: "What is today's average wait time and total patients served?" },
     { labelEn: "Tomorrow's patient forecast", labelUr: "کل کا متوقع رش (Forecast)", text: "What is tomorrow's patient load forecast?" }
   ];
 
@@ -145,53 +148,135 @@ export const TriageChatbot = ({
 
     } else {
       // Clinic Ops Assistant Logic (Strict isolation to currently logged in clinic!)
-      let totalWaiting = 0;
-      Object.keys(liveQueue).forEach(dept => {
-        totalWaiting += (liveQueue[dept] || []).filter(p => p.status === 'waiting').length;
-      });
+      const allTokens = Object.values(liveQueue || {}).flat();
+      const waitingTokens = allTokens.filter(p => p.status === 'waiting');
+      const servingTokens = allTokens.filter(p => p.status === 'serving');
+      const completedTokens = allTokens.filter(p => p.status === 'completed');
+      const emergencyWaiting = waitingTokens.filter(p => p.isEmergency);
 
-      if (query.includes('waiting') || query.includes('patients') || query.includes('mariz') || query.includes('rush') || query.includes('queue')) {
-        return {
-          text: locale === 'ur'
-            ? `📊 اس وقت آپ کے کلینک (${clinicName}) میں کل **${totalWaiting} مریض** انتظار کر رہے ہیں۔ تمام ڈیپارٹمنٹس لائیو کام کر رہے ہیں۔`
-            : `📊 Currently at ${clinicName}, there are **${totalWaiting} patients waiting** across all active departments.`
-        };
+      const totalServed = Math.max(Number(reports?.totalServed) || 0, completedTokens.length);
+      const totalSkipped = Math.max(Number(reports?.totalSkipped) || 0, allTokens.filter(p => p.status === 'skipped').length);
+
+      let calculatedAvgWait = 0;
+      if (completedTokens.length > 0) {
+        const totalMins = completedTokens.reduce((acc, t) => {
+          const wait = t.completedAt ? Math.round((t.completedAt - t.timestamp) / 60000) : 10;
+          return acc + Math.max(1, wait);
+        }, 0);
+        calculatedAvgWait = Math.round(totalMins / completedTokens.length);
+      } else if (reports?.totalServed > 0 && reports?.totalWaitTime > 0) {
+        calculatedAvgWait = Math.round(reports.totalWaitTime / reports.totalServed);
+      } else if (departments.length > 0) {
+        calculatedAvgWait = Math.round(
+          departments.reduce((acc, d) => acc + (Number(d.avgTime) || 10), 0) / departments.length
+        );
+      } else {
+        calculatedAvgWait = 10;
       }
 
-      if (query.includes('stock') || query.includes('supply') || query.includes('medicine') || query.includes('saman') || query.includes('equipment')) {
-        const lowItems = supplies.filter(s => s.quantity <= s.threshold);
-        if (lowItems.length > 0) {
-          const names = lowItems.map(i => `${i.name} (باقی: ${i.quantity} ${i.unit})`).join(', ');
+      // 1. Emergency cases check
+      if (query.includes('emergency') || query.includes('urgent') || query.includes('critical') || query.includes('khatra') || query.includes('shadid')) {
+        if (emergencyWaiting.length > 0) {
+          const listEn = emergencyWaiting.map(e => `• Token #${e.tokenNumber} (${e.patientName || 'Patient'}) - Dept: ${e.deptName || 'OPD'} [Reason: ${e.urgencyReason || 'Urgent Triage'}]`).join('\n');
+          const listUr = emergencyWaiting.map(e => `• ٹوکن #${e.tokenNumber} (${e.patientName || 'مریض'}) - شعبہ: ${e.deptName || 'او پی ڈی'} [وجہ: ${e.urgencyReason || 'فوری معائنہ'}]`).join('\n');
           return {
             text: locale === 'ur'
-              ? `⚠️ فوری الرٹ! آپ کے پاس ${lowItems.length} اشیاء کا اسٹاک کم ہے: ${names}۔ براۓ مہربانی سپلائی مینیجر کو واٹس ایپ الرٹ بھیجیں۔`
-              : `⚠️ Stock Alert! ${lowItems.length} item(s) are below safety threshold: ${lowItems.map(i => `${i.name} (${i.quantity} left)`).join(', ')}. Recommend restocking promptly.`,
+              ? `🚨 **فوری الرٹ!** اس وقت **${emergencyWaiting.length} ایمرجنسی مریض** انتظار میں ہیں:\n\n${listUr}\n\n⚠️ ان کو فوری طور پر ڈاکٹر کے پاس بھیجا جائے!`
+              : `🚨 **Urgent Alert!** There are **${emergencyWaiting.length} Emergency patient(s)** currently waiting in queue:\n\n${listEn}\n\n⚠️ Immediate doctor attention is advised!`,
             isWarning: true
           };
         } else {
           return {
             text: locale === 'ur'
-              ? `✅ زبردست! آپ کے کلینک کا تمام میڈیکل سامان اور ادویات کا اسٹاک محفوظ حد میں ہے۔`
-              : `✅ Excellent! All medicines and OPD equipment stock are currently within healthy safety thresholds.`
+              ? `✅ **معمول کی کارروائی:** اس وقت قطار میں کوئی ایمرجنسی مریض نہیں ہے۔ تمام کاؤنٹرز پر عام مریض دیکھے جا رہے ہیں۔`
+              : `✅ **Normal Priority:** There are currently **0 emergency patients** waiting in queue. All counters are operating normally.`
           };
         }
       }
 
-      if (query.includes('forecast') || query.includes('kal') || query.includes('tomorrow') || query.includes('predict') || query.includes('rush')) {
-        const expected = forecast?.totalExpected || 82;
-        const peak = forecast?.predictedPeakWindow || '10:30 AM - 01:00 PM';
+      // 2. Department-wise queue breakdown
+      if (query.includes('breakdown') || query.includes('department') || query.includes('shoba') || query.includes('detail') || query.includes('har shoba') || query.includes('dept')) {
+        const activeDepts = departments.length > 0 ? departments : Object.keys(liveQueue).map(name => ({ name }));
+        const listEn = activeDepts.map(d => {
+          const deptTokens = liveQueue[d.name] || [];
+          const waiting = deptTokens.filter(p => p.status === 'waiting').length;
+          const serving = deptTokens.find(p => p.status === 'serving');
+          return `• **${d.name}:** ${waiting} waiting ${serving ? `(Serving Token #${serving.tokenNumber} - ${serving.patientName})` : '(No active counter)'}`;
+        }).join('\n');
+
+        const listUr = activeDepts.map(d => {
+          const deptTokens = liveQueue[d.name] || [];
+          const waiting = deptTokens.filter(p => p.status === 'waiting').length;
+          const serving = deptTokens.find(p => p.status === 'serving');
+          return `• **${d.name}:** ${waiting} انتظار میں ${serving ? `(حاضر ٹوکن #${serving.tokenNumber} - ${serving.patientName})` : '(کاؤنٹر فارغ)'}`;
+        }).join('\n');
+
         return {
           text: locale === 'ur'
-            ? `📈 کلینیکل AI پیشگوئی: کل آپ کے کلینک پر تقریباً **~${expected} مریضوں** کی آمد متوقع ہے۔ سب سے زیادہ رش کا وقت **${peak}** ہوگا۔`
-            : `📈 Clinical Forecast: We project approximately **~${expected} patients** tomorrow at ${clinicName}. Peak inflow is anticipated between **${peak}**.`
+            ? `🏥 **شعبہ جات کی لائیو تفصیل (${clinicName}):**\n\n${listUr}\n\nمجموعی انتظار: **${waitingTokens.length} مریض**`
+            : `🏥 **Live Department Breakdown (${clinicName}):**\n\n${listEn}\n\nTotal In-Queue: **${waitingTokens.length} patients**`
+        };
+      }
+
+      // 3. Performance, wait times, served today
+      if (query.includes('wait') || query.includes('intezar') || query.includes('served') || query.includes('completed') || query.includes('performance') || query.includes('karkardagi') || query.includes('aaj ka') || query.includes('time')) {
+        return {
+          text: locale === 'ur'
+            ? `⏱️ **آج کے دن کلینک کی لائیو کارکردگی (${clinicName}):**\n\n• **فارغ کیے گئے مریض (Total Served):** ${totalServed}\n• **مریض کا اوسط انتظار:** ~${calculatedAvgWait} منٹ\n• **اس وقت زیر معائنہ (Serving):** ${servingTokens.length} مریض\n• **غیر حاضر (Skipped):** ${totalSkipped}`
+            : `⏱️ **Real-Time Clinic Performance Today (${clinicName}):**\n\n• **Total Patients Served:** ${totalServed}\n• **Average Patient Wait Time:** ~${calculatedAvgWait} mins\n• **Currently Serving Counters:** ${servingTokens.length}\n• **Skipped / No-Shows:** ${totalSkipped}`
+        };
+      }
+
+      // 4. Low stock supplies & medicines
+      if (query.includes('stock') || query.includes('supply') || query.includes('medicine') || query.includes('saman') || query.includes('equipment') || query.includes('dawa') || query.includes('dawai')) {
+        const lowItems = supplies.filter(s => s.quantity <= s.threshold);
+        if (lowItems.length > 0) {
+          const namesUr = lowItems.map(i => `• ${i.name}: باقی **${i.quantity} ${i.unit}** (حد: ${i.threshold} ${i.unit})`).join('\n');
+          const namesEn = lowItems.map(i => `• ${i.name}: **${i.quantity} ${i.unit}** remaining (Threshold: ${i.threshold} ${i.unit})`).join('\n');
+          return {
+            text: locale === 'ur'
+              ? `⚠️ **فوری میڈیکل سامان الرٹ!** آپ کے پاس ${lowItems.length} اشیاء کا اسٹاک کم ہے:\n\n${namesUr}\n\nبراۓ مہربانی سپلائی مینیجر کو واٹس ایپ الرٹ بھیجیں تاکہ او پی ڈی بند نہ ہو۔`
+              : `⚠️ **Urgent Medical Stock Alert!** ${lowItems.length} item(s) are below safety limits:\n\n${namesEn}\n\nRecommend triggering WhatsApp procurement restock promptly.`,
+            isWarning: true
+          };
+        } else {
+          return {
+            text: locale === 'ur'
+              ? `✅ **زبردست!** آپ کے کلینک کا تمام میڈیکل سامان اور ادویات کا اسٹاک محفوظ حد میں ہے۔`
+              : `✅ **Excellent!** All clinical medicines and OPD equipment stock are currently within healthy safety thresholds.`
+          };
+        }
+      }
+
+      // 5. Forecast & Tomorrow's rush
+      if (query.includes('forecast') || query.includes('kal') || query.includes('tomorrow') || query.includes('predict') || query.includes('rush') || query.includes('peshgoi') || query.includes('inflow')) {
+        const expected = forecast?.totalExpected || Math.max(45, (totalServed + waitingTokens.length) * 2 + 10);
+        const peak = forecast?.predictedPeakWindow || '10:30 AM - 01:00 PM';
+        const confidence = forecast?.confidenceRate || '94%';
+        const busiest = forecast?.deptForecast?.[0]?.name || 'OPD';
+        const rec = forecast?.aiRecommendations?.[0] || 'Keep counter staff alert during morning peak window.';
+
+        return {
+          text: locale === 'ur'
+            ? `📈 **کلینیکل AI پیشگوئی (${forecast?.dateString || 'کل کے لیے'}):**\n\n• **متوقع مریضوں کی آمد:** تقریباً **~${expected} مریض** (${confidence} AI درستگی)\n• **سب سے زیادہ رش کا وقت:** **${peak}**\n• **سب سے مصروف شعبہ:** **${busiest}**\n💡 **AI مشورہ:** ${rec}`
+            : `📈 **AI Clinical Load Forecast (${forecast?.dateString || 'Tomorrow'}):**\n\n• **Projected Inflow:** Approximately **~${expected} patients** (${confidence} AI Confidence)\n• **Predicted Peak Window:** **${peak}**\n• **Busiest Department:** **${busiest}**\n💡 **AI Recommendation:** ${rec}`
+        };
+      }
+
+      // 6. Waiting patients count
+      if (query.includes('waiting') || query.includes('patients') || query.includes('mariz') || query.includes('rush') || query.includes('queue') || query.includes('kitne log') || query.includes('kitne mareez')) {
+        return {
+          text: locale === 'ur'
+            ? `📊 اس وقت **${clinicName}** میں کل **${waitingTokens.length} مریض انتظار کر رہے ہیں** اور **${servingTokens.length} مریض معائنہ کروا رہے ہیں**۔${emergencyWaiting.length > 0 ? `\n\n🚨 **توجہ:** ان میں سے **${emergencyWaiting.length} ایمرجنسی مریض** ہیں جنہیں ترجیحی معائنہ چاہیے۔` : ''}`
+            : `📊 Currently at **${clinicName}**, there are **${waitingTokens.length} patients waiting** and **${servingTokens.length} patients being served** across all departments.${emergencyWaiting.length > 0 ? `\n\n🚨 **Priority Notice:** **${emergencyWaiting.length} Emergency patient(s)** are waiting for immediate care!` : ''}`
         };
       }
 
       // Default clinic helper
       return {
         text: locale === 'ur'
-          ? `میں آپ کے کلینک (${clinicName}) کا اسسٹنٹ ہوں۔ مجھ سے 'مریضوں کی تعداد'، 'کم سامان'، یا 'کل کی پیشگوئی' کے بارے میں پوچھ سکتے ہیں۔`
-          : `I am your ${clinicName} Operations Assistant. You can ask me about 'waiting patients', 'low stock supplies', or 'tomorrow's forecast'.`
+          ? `میں آپ کے کلینک (${clinicName}) کا AI آپریشنز اسسٹنٹ ہوں۔ مجھ سے لائیو قطار ('waiting count')، شعبہ جات کی تفصیل ('department breakdown')، ایمرجنسی الرٹس ('emergency cases')، کم سامان ('low stock')، یا کل کی پیشگوئی ('forecast') کے بارے میں پوچھیں۔`
+          : `I am your ${clinicName} Operations AI Assistant. You can ask me about 'waiting patients', 'department breakdown', 'emergency alerts', 'average wait time', 'low stock supplies', or 'tomorrow's forecast'.`
       };
     }
   };

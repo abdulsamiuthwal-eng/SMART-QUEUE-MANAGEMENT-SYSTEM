@@ -112,8 +112,6 @@ export const OrgDashboard = () => {
       setSupplies(supplyItems);
     });
 
-    setForecast(queueService.getPatientForecast(currentUser.uid));
-
     return () => {
       clearTimeout(timer);
       unsubscribeDepts();
@@ -122,6 +120,18 @@ export const OrgDashboard = () => {
       unsubscribeSupplies();
     };
   }, [currentUser]);
+
+  // Dynamically recalculate AI Patient Load Forecast whenever departments, live queues, or reports update
+  useEffect(() => {
+    if (!currentUser?.uid) return;
+    const dynamicForecast = queueService.getPatientForecast(
+      currentUser.uid,
+      departments,
+      liveQueue,
+      reports
+    );
+    setForecast(dynamicForecast);
+  }, [currentUser?.uid, departments, liveQueue, reports]);
 
   // Count low-stock items
   const lowStockItems = supplies.filter(item => item.quantity <= item.threshold);
@@ -294,9 +304,63 @@ export const OrgDashboard = () => {
     return { label: t('org.loadHigh'), color: 'bg-rose-500/20 border-rose-400/30 text-rose-300', level: 'High' };
   };
 
-  const avgWaitTimeFormatted = reports.totalServed > 0 
-    ? Math.round(reports.totalWaitTime / reports.totalServed) 
-    : 0;
+  // All clinic tokens across all departments for real-time reporting
+  const allClinicTokens = Object.values(liveQueue || {}).flat();
+  const allCompletedTokens = allClinicTokens.filter(p => p.status === 'completed');
+  const allSkippedTokens = allClinicTokens.filter(p => p.status === 'skipped');
+  const allWaitingTokens = allClinicTokens.filter(p => p.status === 'waiting');
+  const allEmergencyWaiting = allWaitingTokens.filter(p => p.isEmergency);
+
+  // Real-time KPI Counts: max of reports counter and active completed/skipped tokens
+  const realTotalServed = Math.max(Number(reports.totalServed) || 0, allCompletedTokens.length);
+  const realTotalSkipped = Math.max(Number(reports.totalSkipped) || 0, allSkippedTokens.length);
+
+  // Real-time Average Wait Time calculation from completed tokens & reports
+  let avgWaitTimeFormatted = 0;
+  if (allCompletedTokens.length > 0) {
+    const totalMins = allCompletedTokens.reduce((acc, t) => {
+      const wait = t.completedAt ? Math.round((t.completedAt - t.timestamp) / 60000) : 10;
+      return acc + Math.max(1, wait);
+    }, 0);
+    avgWaitTimeFormatted = Math.round(totalMins / allCompletedTokens.length);
+  } else if (reports.totalServed > 0 && reports.totalWaitTime > 0) {
+    avgWaitTimeFormatted = Math.round(reports.totalWaitTime / reports.totalServed);
+  } else if (departments.length > 0) {
+    avgWaitTimeFormatted = Math.round(
+      departments.reduce((acc, d) => acc + (Number(d.avgTime) || 10), 0) / departments.length
+    );
+  } else {
+    avgWaitTimeFormatted = 10;
+  }
+
+  // Real-time Hourly Token Inflow calculation from tokens created today
+  const morningTokens = allClinicTokens.filter(t => {
+    if (!t.timestamp) return false;
+    const hr = new Date(t.timestamp).getHours();
+    return hr >= 8 && hr < 12; // 8:00 AM - 12:00 PM
+  });
+  const afternoonTokens = allClinicTokens.filter(t => {
+    if (!t.timestamp) return false;
+    const hr = new Date(t.timestamp).getHours();
+    return hr >= 12 && hr < 15; // 12:00 PM - 3:00 PM
+  });
+  const eveningTokens = allClinicTokens.filter(t => {
+    if (!t.timestamp) return false;
+    const hr = new Date(t.timestamp).getHours();
+    return hr >= 15 && hr < 22; // 3:00 PM - 10:00 PM
+  });
+
+  const totalInflowCount = morningTokens.length + afternoonTokens.length + eveningTokens.length;
+
+  let morningPct = 45;
+  let afternoonPct = 35;
+  let eveningPct = 20;
+
+  if (totalInflowCount > 0) {
+    morningPct = Math.round((morningTokens.length / totalInflowCount) * 100);
+    afternoonPct = Math.round((afternoonTokens.length / totalInflowCount) * 100);
+    eveningPct = Math.max(0, 100 - morningPct - afternoonPct);
+  }
 
   // Selected Department Details (with Emergency sorting)
   const activeDeptQueue = liveQueue[activeDept] || [];
@@ -1408,7 +1472,7 @@ export const OrgDashboard = () => {
                     </div>
                     <div className="relative z-10">
                       <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{t('org.totalServed')}</span>
-                      <span className="block text-2xl sm:text-3xl font-black font-mono text-white mt-0.5">{reports.totalServed}</span>
+                      <span className="block text-2xl sm:text-3xl font-black font-mono text-white mt-0.5">{realTotalServed}</span>
                     </div>
                   </motion.div>
 
@@ -1442,7 +1506,7 @@ export const OrgDashboard = () => {
                     </div>
                     <div className="relative z-10">
                       <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">{t('org.autoSkippedPatients')}</span>
-                      <span className="block text-2xl sm:text-3xl font-black font-mono text-rose-400 mt-0.5">{reports.totalSkipped}</span>
+                      <span className="block text-2xl sm:text-3xl font-black font-mono text-rose-400 mt-0.5">{realTotalSkipped}</span>
                     </div>
                   </motion.div>
                 </div>
@@ -1456,39 +1520,59 @@ export const OrgDashboard = () => {
                   className="glass-acrylic-card rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 lg:p-7 relative overflow-hidden shadow-2xl"
                 >
                   <div className="absolute -top-24 -left-24 w-72 h-72 bg-gradient-to-br from-white/20 via-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
-                  <h3 className="text-base sm:text-lg font-black mb-4 sm:mb-6 flex items-center gap-2 text-white drop-shadow-sm relative z-10">
-                    <BarChart3 size={19} className="text-amber-400 shrink-0" />
-                    <span>{t('org.peakHoursTitle')}</span>
-                  </h3>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-4 sm:mb-6 relative z-10">
+                    <h3 className="text-base sm:text-lg font-black flex items-center gap-2 text-white drop-shadow-sm">
+                      <BarChart3 size={19} className="text-amber-400 shrink-0" />
+                      <span>{t('org.peakHoursTitle')}</span>
+                    </h3>
+                    <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-white/10 text-slate-300 border border-white/15">
+                      {totalInflowCount} {totalInflowCount === 1 ? 'patient' : 'patients'} tracked today
+                    </span>
+                  </div>
 
                   <div className="space-y-4 sm:space-y-5 relative z-10">
                     <div>
                       <div className="flex justify-between text-xs text-slate-300 mb-1.5 font-bold">
                         <span>{t('org.morningSlot')}</span>
-                        <span className="font-mono text-amber-400">45% {t('org.peakVolume')}</span>
+                        <span className="font-mono text-amber-400">
+                          {morningPct}% {morningTokens.length > 0 ? `(${morningTokens.length} ${t('org.patientsLabel')})` : ''} {t('org.peakVolume')}
+                        </span>
                       </div>
                       <div className="w-full h-2.5 sm:h-3 bg-white/10 rounded-full overflow-hidden shadow-inner">
-                        <div className="h-full rounded-full bg-gradient-to-r from-[#e57342] to-[#ff9655]" style={{ width: '45%' }} />
+                        <div 
+                          className="h-full rounded-full bg-gradient-to-r from-[#e57342] to-[#ff9655] transition-all duration-700" 
+                          style={{ width: `${Math.max(4, morningPct)}%` }} 
+                        />
                       </div>
                     </div>
 
                     <div>
                       <div className="flex justify-between text-xs text-slate-300 mb-1.5 font-bold">
                         <span>{t('org.afternoonSlot')}</span>
-                        <span className="font-mono text-amber-300">35% {t('org.normalVolume')}</span>
+                        <span className="font-mono text-amber-300">
+                          {afternoonPct}% {afternoonTokens.length > 0 ? `(${afternoonTokens.length} ${t('org.patientsLabel')})` : ''} {t('org.normalVolume')}
+                        </span>
                       </div>
                       <div className="w-full h-2.5 sm:h-3 bg-white/10 rounded-full overflow-hidden shadow-inner">
-                        <div className="h-full rounded-full bg-gradient-to-r from-[#e57342] to-[#ff9655]" style={{ width: '35%' }} />
+                        <div 
+                          className="h-full rounded-full bg-gradient-to-r from-[#e57342] to-[#ff9655] transition-all duration-700" 
+                          style={{ width: `${Math.max(4, afternoonPct)}%` }} 
+                        />
                       </div>
                     </div>
 
                     <div>
                       <div className="flex justify-between text-xs text-slate-300 mb-1.5 font-bold">
                         <span>{t('org.eveningSlot')}</span>
-                        <span className="font-mono text-emerald-400">20% {t('org.normalVolume')}</span>
+                        <span className="font-mono text-emerald-400">
+                          {eveningPct}% {eveningTokens.length > 0 ? `(${eveningTokens.length} ${t('org.patientsLabel')})` : ''} {t('org.normalVolume')}
+                        </span>
                       </div>
                       <div className="w-full h-2.5 sm:h-3 bg-white/10 rounded-full overflow-hidden shadow-inner">
-                        <div className="h-full rounded-full bg-gradient-to-r from-[#e57342] to-[#ff9655]" style={{ width: '20%' }} />
+                        <div 
+                          className="h-full rounded-full bg-gradient-to-r from-[#e57342] to-[#ff9655] transition-all duration-700" 
+                          style={{ width: `${Math.max(4, eveningPct)}%` }} 
+                        />
                       </div>
                     </div>
                   </div>

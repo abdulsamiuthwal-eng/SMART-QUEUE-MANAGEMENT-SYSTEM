@@ -509,14 +509,25 @@ export const queueService = {
       // Update currently serving to completed
       const currentServing = queueList.find(t => t.status === 'serving');
       if (currentServing) {
-        await update(ref(database, `queues/${orgId}/${deptName}/${currentServing.tokenId}`), { status: 'completed' });
+        const completedAt = Date.now();
+        await update(ref(database, `queues/${orgId}/${deptName}/${currentServing.tokenId}`), { 
+          status: 'completed',
+          completedAt
+        });
         const repRef = ref(database, `reports/${orgId}`);
         const repSnap = await get(repRef);
         let totalServed = 1;
+        let totalWaitTime = 0;
+        let totalSkipped = 0;
         if (repSnap.exists()) {
-          totalServed = (repSnap.val().totalServed || 0) + 1;
+          const val = repSnap.val() || {};
+          totalServed = (val.totalServed || 0) + 1;
+          totalWaitTime = (val.totalWaitTime || 0);
+          totalSkipped = (val.totalSkipped || 0);
         }
-        await update(repRef, { totalServed });
+        const waitMins = Math.max(1, Math.round((completedAt - (currentServing.timestamp || completedAt)) / 60000));
+        totalWaitTime += waitMins;
+        await update(repRef, { totalServed, totalWaitTime, totalSkipped });
       }
 
       const nextPatient = queueList
@@ -559,14 +570,23 @@ export const queueService = {
       if (snapshot.exists()) {
         const currentServing = Object.values(snapshot.val()).find(t => t.status === 'serving');
         if (currentServing) {
-          await update(ref(database, `queues/${orgId}/${deptName}/${currentServing.tokenId}`), { status: 'skipped' });
+          const skippedAt = Date.now();
+          await update(ref(database, `queues/${orgId}/${deptName}/${currentServing.tokenId}`), { 
+            status: 'skipped',
+            skippedAt
+          });
           const repRef = ref(database, `reports/${orgId}`);
           const repSnap = await get(repRef);
           let totalSkipped = 1;
+          let totalServed = 0;
+          let totalWaitTime = 0;
           if (repSnap.exists()) {
-            totalSkipped = (repSnap.val().totalSkipped || 0) + 1;
+            const val = repSnap.val() || {};
+            totalSkipped = (val.totalSkipped || 0) + 1;
+            totalServed = val.totalServed || 0;
+            totalWaitTime = val.totalWaitTime || 0;
           }
-          await update(repRef, { totalSkipped });
+          await update(repRef, { totalSkipped, totalServed, totalWaitTime });
           
           await queueService.callNext(orgId, deptName);
         }
@@ -687,44 +707,104 @@ export const queueService = {
   // ==========================================
   // 12. DAILY PATIENT LOAD FORECAST (AI MODEL)
   // ==========================================
-  getPatientForecast: (orgId) => {
-    const db = isMockEnabled ? getMockDB() : null;
-    const depts = db?.departments[orgId] || [
-      { name: 'Cardiology', avgTime: 15 },
-      { name: 'ENT', avgTime: 10 },
-      { name: 'General Medicine', avgTime: 8 }
-    ];
+  getPatientForecast: (orgId, actualDepartments = [], liveQueue = {}, reports = {}) => {
+    let depts = [];
+    if (actualDepartments && actualDepartments.length > 0) {
+      depts = actualDepartments;
+    } else if (isMockEnabled) {
+      const db = getMockDB();
+      depts = db?.departments[orgId] || [];
+    }
+    
+    if (!depts || depts.length === 0) {
+      depts = [
+        { name: 'General Medicine', avgTime: 10 },
+        { name: 'Emergency', avgTime: 12 },
+        { name: 'Cardiology', avgTime: 15 }
+      ];
+    }
 
-    const todayServed = db?.reports[orgId]?.totalServed || 16;
+    // Tally live queue tokens and emergency volume today
+    let totalLiveTokens = 0;
+    let emergencyCount = 0;
+    const deptTokensCount = {};
+
+    Object.keys(liveQueue || {}).forEach(dName => {
+      const tokens = liveQueue[dName] || [];
+      totalLiveTokens += tokens.length;
+      emergencyCount += tokens.filter(t => t.isEmergency).length;
+      deptTokensCount[dName] = tokens.length;
+    });
+
+    const todayServed = Number(reports?.totalServed) || 0;
+    const todayTotalActivity = Math.max(todayServed, totalLiveTokens);
+
     const dayOfWeek = new Date().getDay();
+    // Monday/Tue/Wed busy, weekends lower
     const weekdayMultiplier = [0.85, 1.35, 1.25, 1.15, 1.2, 0.95, 0.75][dayOfWeek] || 1.1;
-    const baseProjected = Math.max(50, Math.round((todayServed * 3.8 + 24) * weekdayMultiplier));
+
+    // Base projection calculated dynamically from active clinic size and real inflow
+    const baseProjected = Math.max(
+      Math.round((depts.length * 14 + 12) * weekdayMultiplier),
+      Math.round(((todayTotalActivity || 16) * 2.4 + 18) * weekdayMultiplier)
+    );
+
+    // Dynamic department breakdown based on real department activity & consultation speeds
+    const totalDeptWeight = depts.reduce((sum, d) => {
+      const activeWeight = (deptTokensCount[d.name] || 0) * 1.5 + (20 / (Number(d.avgTime) || 10));
+      return sum + activeWeight;
+    }, 0) || 1;
 
     const deptForecast = depts.map((d, index) => {
-      const weight = index === 0 ? 0.44 : (index === 1 ? 0.34 : 0.22);
-      const expected = Math.round(baseProjected * weight);
+      const activeWeight = (deptTokensCount[d.name] || 0) * 1.5 + (20 / (Number(d.avgTime) || 10));
+      const share = activeWeight / totalDeptWeight;
+      const expected = Math.max(4, Math.round(baseProjected * share));
+
+      // Peak hours calculation based on index / department type
+      let peakHour = '10:00 AM - 12:30 PM';
+      if (d.name.toLowerCase().includes('emergency')) {
+        peakHour = '09:00 AM - 02:00 PM (Continuous)';
+      } else if (index % 2 === 1) {
+        peakHour = '11:00 AM - 01:30 PM';
+      } else if (index % 3 === 2) {
+        peakHour = '02:00 PM - 04:30 PM';
+      }
+
       return {
         name: d.name,
         expectedPatients: expected,
-        peakHour: index === 0 ? '10:00 AM - 12:30 PM' : '11:00 AM - 01:30 PM',
-        recommendedDesks: Math.max(1, Math.ceil(expected / 22))
+        peakHour,
+        recommendedDesks: Math.max(1, Math.ceil(expected / 18))
       };
     });
+
+    // Find busiest department
+    const busiest = [...deptForecast].sort((a, b) => b.expectedPatients - a.expectedPatients)[0] || deptForecast[0];
 
     const tomorrow = new Date(Date.now() + 86400000);
     const formattedDate = tomorrow.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 
+    // Dynamic AI Recommendations tailored to real clinic state
+    const recommendations = [
+      `Estimated ~${Math.round(baseProjected * 0.55)} patients will arrive during morning peak inflow (9:30 AM - 1:00 PM).`,
+      `${busiest.name} is projected to experience peak demand (~${busiest.expectedPatients} patients) requiring ${busiest.recommendedDesks} active desk(s).`
+    ];
+
+    if (emergencyCount > 0) {
+      recommendations.push(`Detected ${emergencyCount} urgent/emergency case(s) today. Ensure rapid triage counter is staffed at 8:30 AM.`);
+    } else {
+      recommendations.push(`Keep 2 counter staff active during the predicted 10:30 AM - 1:00 PM surge window for zero wait backlog.`);
+    }
+
+    const dynamicConfidence = Math.min(97, Math.max(90, 88 + (todayTotalActivity > 0 ? 5 : 2) + Math.min(4, depts.length)));
+
     return {
       dateString: formattedDate,
       totalExpected: baseProjected,
-      confidenceRate: '94%',
+      confidenceRate: `${dynamicConfidence}%`,
       predictedPeakWindow: '10:30 AM - 01:00 PM',
       deptForecast,
-      aiRecommendations: [
-        `High morning rush expected (~${Math.round(baseProjected * 0.58)} patients before 1:00 PM).`,
-        `Cardiology is projected to have the highest queue density tomorrow.`,
-        `Recommend ensuring 2 doctors on duty between 10:30 AM and 1:00 PM.`
-      ]
+      aiRecommendations: recommendations
     };
   },
 
