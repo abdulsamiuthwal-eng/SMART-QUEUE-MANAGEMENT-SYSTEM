@@ -6,12 +6,18 @@ import { localDB } from '../services/localDB';
 const MOCK_STORAGE_KEY = 'smart_queue_mock_db';
 
 const defaultSuppliesList = [
-  { id: 'sup_1', name: 'Disposable Syringes (5ml)', category: 'disposable', quantity: 8, threshold: 20, unit: 'boxes' },
-  { id: 'sup_2', name: 'Latex Examination Gloves (M)', category: 'disposable', quantity: 42, threshold: 25, unit: 'boxes' },
-  { id: 'sup_3', name: 'Paracetamol Tablets (500mg)', category: 'medicine', quantity: 12, threshold: 30, unit: 'packs' },
-  { id: 'sup_4', name: 'IV Saline Infusion (500ml)', category: 'medicine', quantity: 16, threshold: 15, unit: 'bags' },
-  { id: 'sup_5', name: 'Digital Blood Pressure Monitor', category: 'equipment', quantity: 2, threshold: 3, unit: 'units' },
-  { id: 'sup_6', name: 'Infrared Clinical Thermometer', category: 'equipment', quantity: 4, threshold: 2, unit: 'units' }
+  { id: 'sup_1', name: 'Disposable Syringes (5ml BD Emerald)', category: 'disposable', quantity: 18, threshold: 20, unit: 'boxes' },
+  { id: 'sup_2', name: 'Latex Examination Gloves (M - Powder Free)', category: 'disposable', quantity: 45, threshold: 25, unit: 'boxes' },
+  { id: 'sup_3', name: 'Amoxicillin Capsules (500mg USP)', category: 'medicine', quantity: 14, threshold: 25, unit: 'packs' },
+  { id: 'sup_4', name: 'Paracetamol Tablets & Oral Syrup (500mg)', category: 'medicine', quantity: 60, threshold: 30, unit: 'packs' },
+  { id: 'sup_5', name: 'Normal Saline IV Infusion 0.9% (500ml)', category: 'medicine', quantity: 8, threshold: 15, unit: 'bags' },
+  { id: 'sup_6', name: 'Digital Blood Pressure Monitor (Omron M2)', category: 'equipment', quantity: 4, threshold: 3, unit: 'units' },
+  { id: 'sup_7', name: 'Infrared Forehead Clinical Thermometer', category: 'equipment', quantity: 6, threshold: 2, unit: 'units' },
+  { id: 'sup_8', name: 'Sterile Gauze Bandages & Surgical Tape', category: 'disposable', quantity: 55, threshold: 30, unit: 'rolls' },
+  { id: 'sup_9', name: 'ECG Thermal Recording Paper (50mm)', category: 'equipment', quantity: 5, threshold: 8, unit: 'rolls' },
+  { id: 'sup_10', name: 'Finger Pulse Oximeter Probes (Adult/Pediatric)', category: 'equipment', quantity: 8, threshold: 4, unit: 'units' },
+  { id: 'sup_11', name: 'IV Cannula 20G & 22G with Injection Port', category: 'disposable', quantity: 32, threshold: 20, unit: 'boxes' },
+  { id: 'sup_12', name: 'Povidone-Iodine 10% Antiseptic Solution (500ml)', category: 'medicine', quantity: 12, threshold: 10, unit: 'bottles' }
 ];
 
 const getMockDB = () => {
@@ -657,12 +663,37 @@ export const queueService = {
   // ==========================================
   // 11. SUPPLY ALERT & INVENTORY SYSTEM
   // ==========================================
+  seedDefaultSupplies: async (orgId) => {
+    if (!orgId) return defaultSuppliesList;
+    if (isMockEnabled) {
+      const db = getMockDB();
+      if (!db.supplies) db.supplies = {};
+      db.supplies[orgId] = defaultSuppliesList;
+      saveMockDB(db);
+      window.dispatchEvent(new CustomEvent('mock-db-update'));
+      return defaultSuppliesList;
+    } else {
+      const supRef = ref(database, `supplies/${orgId}`);
+      const initialMap = {};
+      defaultSuppliesList.forEach(item => {
+        initialMap[item.id] = item;
+      });
+      await set(supRef, initialMap);
+      return defaultSuppliesList;
+    }
+  },
+
   getSupplies: (orgId, callback) => {
+    if (!orgId) {
+      callback([]);
+      return () => {};
+    }
+
     if (isMockEnabled) {
       const listener = () => {
         const db = getMockDB();
         if (!db.supplies) db.supplies = {};
-        if (!db.supplies[orgId]) {
+        if (!db.supplies[orgId] || !Array.isArray(db.supplies[orgId]) || db.supplies[orgId].length === 0) {
           db.supplies[orgId] = defaultSuppliesList;
           saveMockDB(db);
         }
@@ -673,8 +704,22 @@ export const queueService = {
       return () => window.removeEventListener('mock-db-update', listener);
     } else {
       const supRef = ref(database, `supplies/${orgId}`);
-      return onValue(supRef, (snapshot) => {
-        callback(snapshot.exists() ? Object.values(snapshot.val()) : []);
+      return onValue(supRef, async (snapshot) => {
+        if (snapshot.exists() && Object.keys(snapshot.val() || {}).length > 0) {
+          callback(Object.values(snapshot.val()));
+        } else {
+          // Auto-seed all 12 items to Firebase RTDB so the clinic immediately has rich inventory data
+          const initialMap = {};
+          defaultSuppliesList.forEach(item => {
+            initialMap[item.id] = item;
+          });
+          try {
+            await set(supRef, initialMap);
+          } catch (e) {
+            console.error("Auto-seeding default supplies to Firebase failed:", e);
+          }
+          callback(defaultSuppliesList);
+        }
       });
     }
   },

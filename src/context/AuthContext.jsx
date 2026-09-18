@@ -201,6 +201,7 @@ export const AuthProvider = ({ children }) => {
         db.reports[uid] = { totalServed: 0, totalWaitTime: 0, totalSkipped: 0 };
         localStorage.setItem('smart_queue_mock_db', JSON.stringify(db));
       }
+      await queueService.seedDefaultSupplies(uid);
 
       // DO NOT set currentUser or MOCK_AUTH_KEY here!
       return { uid, email, role: 'org', ...profile };
@@ -209,9 +210,10 @@ export const AuthProvider = ({ children }) => {
       const profile = { hospitalName, email, phone, address, role: 'org' };
       await queueService.createUserProfile(userCredential.user.uid, profile);
       
-      // Seed default departments on real Firebase
+      // Seed default departments & 12 supplies on real Firebase
       await queueService.addDepartment(userCredential.user.uid, 'General OPD', 10);
       await queueService.addDepartment(userCredential.user.uid, 'Emergency', 5);
+      await queueService.seedDefaultSupplies(userCredential.user.uid);
       
       return userCredential.user;
     }
@@ -347,6 +349,7 @@ export const AuthProvider = ({ children }) => {
               await queueService.addDepartment(userCredential.user.uid, 'General OPD', 10);
               await queueService.addDepartment(userCredential.user.uid, 'Emergency', 5);
               await queueService.addDepartment(userCredential.user.uid, 'Cardiology', 15);
+              await queueService.seedDefaultSupplies(userCredential.user.uid);
             }
             const fullUser = {
               uid: userCredential.user.uid,

@@ -259,6 +259,28 @@ export const OrgDashboard = () => {
     }
   };
 
+  // Delete supply item from Firebase
+  const handleDeleteSupply = async (itemId) => {
+    if (!currentUser?.uid) return;
+    try {
+      await queueService.deleteSupplyItem(currentUser.uid, itemId);
+      triggerAlert('warning', locale === 'ur' ? 'طبی سامان خارج کر دیا گیا۔' : 'Supply item removed from inventory.');
+    } catch (err) {
+      triggerAlert('error', err.message);
+    }
+  };
+
+  // Seed 12 standard medical kit items to Firebase
+  const handleSeedSupplies = async () => {
+    if (!currentUser?.uid) return;
+    try {
+      await queueService.seedDefaultSupplies(currentUser.uid);
+      triggerAlert('success', locale === 'ur' ? '12 معیاری طبی اشیاء اور ادویات کامیابی سے Firebase میں شامل ہو گئیں!' : '12 standard medical supplies successfully added to Firebase!');
+    } catch (err) {
+      triggerAlert('error', err.message);
+    }
+  };
+
   // 9. Actions: Send WhatsApp Restock Alert to Procurement
   const handleOrderSupplyWhatsApp = (item) => {
     const msg = `🚨 *URGENT MEDICAL SUPPLY ALERT*\n\n` +
@@ -1194,12 +1216,23 @@ export const OrgDashboard = () => {
                   {/* Supplies Table */}
                   <div className="lg:col-span-2 glass-acrylic-card rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 lg:p-7 shadow-2xl relative overflow-hidden">
                     <div className="absolute -top-24 -left-24 w-72 h-72 bg-gradient-to-br from-white/20 via-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
-                    <div className="flex justify-between items-center mb-4 sm:mb-5 relative z-10">
+                    <div className="flex justify-between items-center mb-4 sm:mb-5 relative z-10 flex-wrap gap-2">
                       <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
                         <Package size={19} className="text-amber-400 shrink-0" />
                         <span>{t('org.opdInventoryTitle')}</span>
                       </h3>
-                      <span className="text-xs font-bold text-slate-300 hidden sm:inline">{t('org.realtimeStockMonitor')}</span>
+                      <div className="flex items-center gap-2.5">
+                        <button
+                          type="button"
+                          onClick={handleSeedSupplies}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-300 text-xs font-bold transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95"
+                          title="Seed standard hospital medical kit to Firebase"
+                        >
+                          <Plus size={13} className="text-amber-400" />
+                          <span>{locale === 'ur' ? '12 معیاری اشیاء لوڈ کریں' : 'Load Standard Kit (12)'}</span>
+                        </button>
+                        <span className="text-xs font-bold text-slate-300 hidden sm:inline">{t('org.realtimeStockMonitor')}</span>
+                      </div>
                     </div>
 
                     <div className="overflow-x-auto relative z-10 no-scrollbar">
@@ -1215,64 +1248,98 @@ export const OrgDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {supplies.map((item) => {
-                            const isLow = item.quantity <= item.threshold;
-                            return (
-                              <tr key={item.id} className={`border-b transition-colors ${isLow ? 'bg-rose-500/10 border-rose-500/20' : 'border-white/10 hover:bg-white/[0.04]'}`}>
-                                <td className="py-3.5 font-extrabold text-white">{item.name}</td>
-                                <td className="py-3.5">
-                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/10 text-slate-200 border border-white/15 uppercase">
-                                    {item.category}
-                                  </span>
-                                </td>
-                                <td className="py-3.5">
-                                  <div className="flex items-center justify-center gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleStockChange(item.id, -1)}
-                                      className="w-6 h-6 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center cursor-pointer"
-                                    >
-                                      -
-                                    </button>
-                                    <span className={`font-mono font-black text-sm ${isLow ? 'text-rose-400' : 'text-white'}`}>
-                                      {item.quantity} {item.unit}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleStockChange(item.id, 5)}
-                                      className="w-6 h-6 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center cursor-pointer"
-                                    >
-                                      +
-                                    </button>
-                                  </div>
-                                </td>
-                                <td className="py-3.5 font-mono text-slate-300 font-bold">{item.threshold} {item.unit}</td>
-                                <td className="py-3.5">
-                                  {isLow ? (
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 font-black text-[10px] animate-pulse">
-                                      <AlertTriangle size={11} />
-                                      <span>{t('org.lowStockBadge')}</span>
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 font-bold text-[10px]">
-                                      <CheckCircle2 size={11} />
-                                      <span>{t('org.optimalBadge')}</span>
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="py-3.5 text-right">
+                          {supplies.length === 0 ? (
+                            <tr>
+                              <td colSpan={6} className="py-12 text-center">
+                                <div className="flex flex-col items-center justify-center gap-3">
+                                  <Package size={36} className="text-amber-400/60" />
+                                  <p className="text-sm font-bold text-slate-300">
+                                    {locale === 'ur' ? 'ابھی کوئی طبی سامان رجسٹر نہیں ہے۔' : 'No medical supplies registered yet.'}
+                                  </p>
                                   <button
                                     type="button"
-                                    onClick={() => handleOrderSupplyWhatsApp(item)}
-                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-[11px] font-bold cursor-pointer transition-all shadow-sm"
+                                    onClick={handleSeedSupplies}
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#e57342] to-[#f97316] text-slate-950 font-black text-xs shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer"
                                   >
-                                    <MessageCircle size={12} />
-                                    <span>WhatsApp</span>
+                                    <Plus size={15} />
+                                    <span>{locale === 'ur' ? '12 معیاری طبی اشیاء اور ادویات شامل کریں' : 'Add 12 Standard Medical Items to Firebase'}</span>
                                   </button>
-                                </td>
-                              </tr>
-                            );
-                          })}
+                                </div>
+                              </td>
+                            </tr>
+                          ) : (
+                            supplies.map((item) => {
+                              const isLow = item.quantity <= item.threshold;
+                              return (
+                                <tr key={item.id} className={`border-b transition-colors ${isLow ? 'bg-rose-500/10 border-rose-500/20' : 'border-white/10 hover:bg-white/[0.04]'}`}>
+                                  <td className="py-3.5 font-extrabold text-white">{item.name}</td>
+                                  <td className="py-3.5">
+                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/10 text-slate-200 border border-white/15 uppercase">
+                                      {item.category}
+                                    </span>
+                                  </td>
+                                  <td className="py-3.5">
+                                    <div className="flex items-center justify-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleStockChange(item.id, -1)}
+                                        className="w-6 h-6 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center cursor-pointer"
+                                        title="Decrease 1 unit"
+                                      >
+                                        -
+                                      </button>
+                                      <span className={`font-mono font-black text-sm ${isLow ? 'text-rose-400' : 'text-white'}`}>
+                                        {item.quantity} {item.unit}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleStockChange(item.id, 5)}
+                                        className="w-6 h-6 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center cursor-pointer"
+                                        title="Increase 5 units"
+                                      >
+                                        +
+                                      </button>
+                                    </div>
+                                  </td>
+                                  <td className="py-3.5 font-mono text-slate-300 font-bold">{item.threshold} {item.unit}</td>
+                                  <td className="py-3.5">
+                                    {isLow ? (
+                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 font-black text-[10px] animate-pulse">
+                                        <AlertTriangle size={11} />
+                                        <span>{t('org.lowStockBadge')}</span>
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 font-bold text-[10px]">
+                                        <CheckCircle2 size={11} />
+                                        <span>{t('org.optimalBadge')}</span>
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-3.5 text-right">
+                                    <div className="flex items-center justify-end gap-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOrderSupplyWhatsApp(item)}
+                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-[11px] font-bold cursor-pointer transition-all shadow-sm"
+                                        title="Send WhatsApp Order"
+                                      >
+                                        <MessageCircle size={12} />
+                                        <span>WhatsApp</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteSupply(item.id)}
+                                        className="p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/30 border border-rose-400/30 text-rose-300 transition-all cursor-pointer"
+                                        title="Delete Item"
+                                      >
+                                        <Trash2 size={12} />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
                         </tbody>
                       </table>
                     </div>
