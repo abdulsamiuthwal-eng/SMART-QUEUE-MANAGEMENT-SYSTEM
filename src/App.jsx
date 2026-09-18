@@ -27,7 +27,11 @@ if (typeof window !== 'undefined') {
 
 // Guard that locks down dashboard access based on the patient/org role
 const RoleGuard = ({ children, allowedRole }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, loading } = useAuth();
+
+  if (loading && !currentUser) {
+    return <SplashScreen standalone={true} />;
+  }
 
   if (!currentUser) {
     return <Navigate to="/login" replace />;
@@ -44,7 +48,11 @@ const RoleGuard = ({ children, allowedRole }) => {
 
 // Guard for login/register pages (redirects logged-in users straight to their dashboard)
 const PublicGuard = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, loading } = useAuth();
+
+  if (loading && !currentUser) {
+    return <SplashScreen standalone={true} />;
+  }
 
   if (currentUser) {
     const redirectPath = currentUser.role === 'org' ? '/org-dashboard' : '/patient-dashboard';
@@ -79,8 +87,8 @@ const AnimatedRoutes = () => {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={routeKey}>
-        {/* Unified Continuous Stage for Welcome & Login (Zero black flash, persistent 3D canvas) */}
-        <Route path="/" element={<PublicGuard><AuthPortal initialView="welcome" /></PublicGuard>} />
+        {/* Landing Page: Always loads the 3D Get Started / Welcome page directly */}
+        <Route path="/" element={<AuthPortal initialView="welcome" />} />
         <Route path="/login" element={<PublicGuard><AuthPortal initialView="login" /></PublicGuard>} />
 
         <Route path="/register" element={<PublicGuard><PageWrapper><Register /></PageWrapper></PublicGuard>} />

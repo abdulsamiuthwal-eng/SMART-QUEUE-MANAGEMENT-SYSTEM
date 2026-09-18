@@ -34,7 +34,7 @@ import bgArt from '../assets/queue_lounge_art.webp';
 export const AuthPortal = ({ initialView = 'welcome' }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { login, loginWithGoogle } = useAuth();
+  const { currentUser, login, loginWithGoogle, logout } = useAuth();
   const { t, locale, toggleLanguage } = useLanguage();
 
   const isInitialLogin = location.pathname === '/login' || initialView === 'login';
@@ -64,8 +64,23 @@ export const AuthPortal = ({ initialView = 'welcome' }) => {
   const [showSplash, setShowSplash] = useState(false);
   const [destPath, setDestPath] = useState('');
 
-  // Handle click on "Get Started" -> snaps 3D snake & drags login screen in from right
+  // Handle click on "Get Started" -> if logged in, go straight to active dashboard; else transition to login
   const handleGetStarted = () => {
+    if (currentUser) {
+      const path = currentUser.role === 'org' ? '/org-dashboard' : '/patient-dashboard';
+      navigate(path);
+      return;
+    }
+    setHasUserTransitioned(true);
+    setIsLogin(true);
+    window.history.pushState(null, '', '/login');
+  };
+
+  // Switch or sign in with another account
+  const handleSwitchAccount = async () => {
+    if (currentUser) {
+      await logout();
+    }
     setHasUserTransitioned(true);
     setIsLogin(true);
     window.history.pushState(null, '', '/login');
@@ -212,8 +227,24 @@ export const AuthPortal = ({ initialView = 'welcome' }) => {
               </p>
             </div>
 
-            {/* "Get Started" CTA Button (Triggers 3D Snake Snap & Right-to-Left Stage Drag) */}
-            <div className="flex flex-col items-center gap-4 w-full max-w-xs relative z-30 pointer-events-auto">
+            {/* "Get Started" CTA Button & Active Session Indicator */}
+            <div className="flex flex-col items-center gap-3 w-full max-w-sm relative z-30 pointer-events-auto">
+              {currentUser && (
+                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/70 border border-amber-400/30 backdrop-blur-md text-[11px] text-slate-200 shadow-lg">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <span>
+                    {t('welcome.loggedInAs')}:{' '}
+                    <strong className="text-amber-300 font-bold">
+                      {currentUser.hospitalName || currentUser.name || currentUser.email}
+                    </strong>
+                    {' '}
+                    <span className="text-slate-400">
+                      ({currentUser.role === 'org' ? t('welcome.clinicRole') : t('welcome.patientRole')})
+                    </span>
+                  </span>
+                </div>
+              )}
+
               <button
                 id="get-started-btn"
                 type="button"
@@ -221,7 +252,7 @@ export const AuthPortal = ({ initialView = 'welcome' }) => {
                 className="group w-full flex items-center justify-center gap-3 py-3.5 px-8 bg-gradient-to-r from-[#e57342] via-[#ff9655] to-[#e57342] hover:brightness-110 text-slate-950 font-black rounded-2xl shadow-[0_8px_32px_rgba(229,115,66,0.5)] border border-amber-300/50 transition-all cursor-pointer text-sm tracking-wide select-none hover:scale-105 active:scale-95 relative z-30 pointer-events-auto"
               >
                 <span className="font-black text-sm tracking-wide">
-                  {t('welcome.getStarted')}
+                  {currentUser ? t('welcome.continueDashboard') : t('welcome.getStarted')}
                 </span>
                 <ArrowRight
                   size={18}
@@ -230,6 +261,16 @@ export const AuthPortal = ({ initialView = 'welcome' }) => {
                   }`}
                 />
               </button>
+
+              {currentUser && (
+                <button
+                  type="button"
+                  onClick={handleSwitchAccount}
+                  className="text-xs text-amber-200/80 hover:text-white underline underline-offset-4 cursor-pointer transition-colors pt-0.5"
+                >
+                  {t('welcome.switchAccount')}
+                </button>
+              )}
             </div>
 
             {/* Floating Feature Badges */}

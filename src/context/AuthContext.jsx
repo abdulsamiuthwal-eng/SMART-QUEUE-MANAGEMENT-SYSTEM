@@ -14,35 +14,81 @@ import { localDB } from '../services/localDB';
 const AuthContext = createContext();
 
 const MOCK_AUTH_KEY = 'smart_queue_mock_auth';
+const SESSION_CACHE_KEY = 'smart_queue_session_cache';
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Synchronous session hydration on initial boot / browser refresh
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const cached = localStorage.getItem(SESSION_CACHE_KEY);
+      if (cached) return JSON.parse(cached);
+      const mockAuth = localStorage.getItem(MOCK_AUTH_KEY);
+      if (mockAuth) return JSON.parse(mockAuth);
+    } catch (e) {
+      console.error("Failed to parse cached session:", e);
+    }
+    return null;
+  });
 
-  // Initialize Auth State
+  // If user is already cached in localStorage, start loading as false to prevent blank flicker
+  const [loading, setLoading] = useState(() => {
+    try {
+      const cached = localStorage.getItem(SESSION_CACHE_KEY) || localStorage.getItem(MOCK_AUTH_KEY);
+      return !cached;
+    } catch (e) {
+      return true;
+    }
+  });
+
+  // Helper to keep React state and localStorage cache in 100% sync
+  const persistUser = (user) => {
+    setCurrentUser(user);
+    try {
+      if (user && user.uid) {
+        localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(user));
+        if (isMockEnabled) {
+          localStorage.setItem(MOCK_AUTH_KEY, JSON.stringify(user));
+        }
+      } else {
+        localStorage.removeItem(SESSION_CACHE_KEY);
+        if (isMockEnabled) {
+          localStorage.removeItem(MOCK_AUTH_KEY);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to persist session to localStorage:", e);
+    }
+  };
+
+  // Initialize Auth State & sync with backend / mock
   useEffect(() => {
     if (isMockEnabled) {
-      const storedAuth = localStorage.getItem(MOCK_AUTH_KEY);
+      const storedAuth = localStorage.getItem(SESSION_CACHE_KEY) || localStorage.getItem(MOCK_AUTH_KEY);
       if (storedAuth) {
-        const authData = JSON.parse(storedAuth);
-        // Validate user still exists in mock DB
-        queueService.getUserProfile(authData.uid).then(profile => {
-          if (profile) {
-            setCurrentUser({ ...authData, ...profile });
-          } else {
-            localStorage.removeItem(MOCK_AUTH_KEY);
-          }
+        try {
+          const authData = JSON.parse(storedAuth);
+          queueService.getUserProfile(authData.uid).then(profile => {
+            if (profile) {
+              persistUser({ ...authData, ...profile });
+            }
+            setLoading(false);
+          }).catch(() => {
+            setLoading(false);
+          });
+        } catch (e) {
           setLoading(false);
-        });
+        }
       } else {
         setLoading(false);
       }
 
       // Handle external tab updates in mock mode
       const syncAuth = () => {
-        const stored = localStorage.getItem(MOCK_AUTH_KEY);
+        const stored = localStorage.getItem(SESSION_CACHE_KEY) || localStorage.getItem(MOCK_AUTH_KEY);
         if (stored) {
-          setCurrentUser(JSON.parse(stored));
+          try {
+            setCurrentUser(JSON.parse(stored));
+          } catch (e) {}
         } else {
           setCurrentUser(null);
         }
@@ -54,19 +100,49 @@ export const AuthProvider = ({ children }) => {
         if (user) {
           try {
             const profile = await queueService.getUserProfile(user.uid);
-            setCurrentUser({
+            let role = profile?.role;
+            if (!role) {
+              const cached = localStorage.getItem(SESSION_CACHE_KEY);
+              if (cached) {
+                try {
+                  const parsed = JSON.parse(cached);
+                  if (parsed.uid === user.uid && parsed.role) {
+                    role = parsed.role;
+                  }
+                } catch (e) {}
+              }
+            }
+            if (!role) {
+              role = user.email?.toLowerCase().includes('clinic') ? 'org' : 'patient';
+            }
+
+            const fullUser = {
               uid: user.uid,
               email: user.email,
               displayName: user.displayName,
               photoURL: user.photoURL,
-              ...profile
-            });
+              ...profile,
+              role: role || 'patient'
+            };
+            persistUser(fullUser);
           } catch (e) {
             console.error("Error fetching user profile:", e);
-            setCurrentUser(user);
+            const cached = localStorage.getItem(SESSION_CACHE_KEY);
+            if (cached) {
+              try {
+                const parsed = JSON.parse(cached);
+                if (parsed.uid === user.uid) {
+                  persistUser(parsed);
+                  setLoading(false);
+                  return;
+                }
+              } catch (err) {}
+            }
+            const fallbackRole = user.email?.toLowerCase().includes('clinic') ? 'org' : 'patient';
+            persistUser({ ...user, role: fallbackRole });
           }
         } else {
-          setCurrentUser(null);
+          persistUser(null);
         }
         setLoading(false);
       });
@@ -186,8 +262,7 @@ export const AuthProvider = ({ children }) => {
             phone: '0300-1234567',
             address: 'Gulshan-e-Iqbal, Karachi, Pakistan'
           };
-          localStorage.setItem(MOCK_AUTH_KEY, JSON.stringify(demoClinic));
-          setCurrentUser(demoClinic);
+          persistUser(demoClinic);
           return demoClinic;
         } else if (email.toLowerCase() === 'patient@demo.com') {
           const demoPatient = {
@@ -201,8 +276,7 @@ export const AuthProvider = ({ children }) => {
           db.users = db.users || {};
           db.users['mock_patient_1'] = demoPatient;
           localStorage.setItem('smart_queue_mock_db', JSON.stringify(db));
-          localStorage.setItem(MOCK_AUTH_KEY, JSON.stringify(demoPatient));
-          setCurrentUser(demoPatient);
+          persistUser(demoPatient);
           return demoPatient;
         }
         throw new Error('auth/user-not-found');
@@ -213,8 +287,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error('auth/wrong-password');
       }
       
-      localStorage.setItem(MOCK_AUTH_KEY, JSON.stringify(matchedUser));
-      setCurrentUser(matchedUser);
+      persistUser(matchedUser);
       return matchedUser;
     } else {
       try {
@@ -238,7 +311,16 @@ export const AuthProvider = ({ children }) => {
               };
           await queueService.createUserProfile(userCredential.user.uid, profile);
         }
-        return { ...userCredential.user, ...profile };
+        const fullUser = {
+          uid: userCredential.user.uid,
+          email: userCredential.user.email,
+          displayName: userCredential.user.displayName,
+          photoURL: userCredential.user.photoURL,
+          ...profile,
+          role: profile?.role || (email.toLowerCase().includes('clinic') ? 'org' : 'patient')
+        };
+        persistUser(fullUser);
+        return fullUser;
       } catch (authErr) {
         // If it's a demo account and doesn't exist yet on this fresh Firebase project, automatically create it!
         const isDemo = (email.toLowerCase() === 'clinic@demo.com' || email.toLowerCase() === 'patient@demo.com') && password === 'demo123';
@@ -266,7 +348,16 @@ export const AuthProvider = ({ children }) => {
               await queueService.addDepartment(userCredential.user.uid, 'Emergency', 5);
               await queueService.addDepartment(userCredential.user.uid, 'Cardiology', 15);
             }
-            return { ...userCredential.user, ...profile };
+            const fullUser = {
+              uid: userCredential.user.uid,
+              email: userCredential.user.email,
+              displayName: userCredential.user.displayName,
+              photoURL: userCredential.user.photoURL,
+              ...profile,
+              role: profile?.role || (isClinic ? 'org' : 'patient')
+            };
+            persistUser(fullUser);
+            return fullUser;
           } catch (createErr) {
             console.error("Auto-provisioning demo user failed:", createErr);
             throw authErr;
@@ -290,8 +381,7 @@ export const AuthProvider = ({ children }) => {
       };
       await queueService.createUserProfile(uid, profile);
       const sessionUser = { uid, email: profile.email, role: 'patient', ...profile };
-      localStorage.setItem(MOCK_AUTH_KEY, JSON.stringify(sessionUser));
-      setCurrentUser(sessionUser);
+      persistUser(sessionUser);
       return sessionUser;
     } else {
       const result = await signInWithPopup(auth, googleProvider);
@@ -307,19 +397,30 @@ export const AuthProvider = ({ children }) => {
         };
         await queueService.createUserProfile(result.user.uid, profile);
       }
-      return { ...result.user, ...profile };
+      const fullUser = {
+        uid: result.user.uid,
+        email: result.user.email,
+        displayName: result.user.displayName,
+        photoURL: result.user.photoURL,
+        ...profile,
+        role: profile?.role || 'patient'
+      };
+      persistUser(fullUser);
+      return fullUser;
     }
   };
 
   // 5. Logout
   const logout = async () => {
+    persistUser(null);
     if (isMockEnabled) {
-      localStorage.removeItem(MOCK_AUTH_KEY);
-      setCurrentUser(null);
       window.dispatchEvent(new CustomEvent('mock-db-update'));
     } else {
-      await signOut(auth);
-      setCurrentUser(null);
+      try {
+        await signOut(auth);
+      } catch (e) {
+        console.error("SignOut error:", e);
+      }
     }
   };
 
@@ -336,13 +437,13 @@ export const AuthProvider = ({ children }) => {
       await localDB.saveUser(user);
 
       // If this user was currently in session, update session as well
-      const savedAuth = localStorage.getItem(MOCK_AUTH_KEY);
+      const savedAuth = localStorage.getItem(SESSION_CACHE_KEY) || localStorage.getItem(MOCK_AUTH_KEY);
       if (savedAuth) {
         try {
           const authObj = JSON.parse(savedAuth);
           if (authObj.email && authObj.email.toLowerCase() === email.toLowerCase()) {
             authObj.password = newPassword;
-            localStorage.setItem(MOCK_AUTH_KEY, JSON.stringify(authObj));
+            persistUser(authObj);
           }
         } catch (e) {}
       }
@@ -356,6 +457,8 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     currentUser,
+    loading,
+    persistUser,
     register,
     registerPatient,
     registerOrganization,
